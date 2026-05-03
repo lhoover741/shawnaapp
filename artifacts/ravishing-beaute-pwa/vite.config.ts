@@ -5,20 +5,22 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const rawPort = process.env.PORT;
-if (!rawPort) throw new Error("PORT environment variable is required but was not provided.");
+const rawPort = process.env.PORT || "5173";
 const port = Number(rawPort);
-if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT value: "${rawPort}"`);
 
-const basePath = process.env.BASE_PATH;
-if (!basePath) throw new Error("BASE_PATH environment variable is required but was not provided.");
+if (Number.isNaN(port) || port <= 0) {
+  throw new Error(`Invalid PORT value: "${rawPort}"`);
+}
+
+const rawBasePath = process.env.BASE_PATH || "/";
+const basePath = rawBasePath.endsWith("/") ? rawBasePath : `${rawBasePath}/`;
 
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
-    runtimeErrorOverlay(),
+    ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
     VitePWA({
       registerType: "autoUpdate",
       base: basePath,
@@ -29,8 +31,8 @@ export default defineConfig({
         name: "Ravishing Beauté",
         short_name: "RB Beauté",
         description: "Premium braiding & natural hair by appointment — Calumet City / NWI",
-        theme_color: "#AC5D7A",
-        background_color: "#F9F5F0",
+        theme_color: "#000101",
+        background_color: "#000101",
         display: "standalone",
         orientation: "portrait",
         start_url: basePath,
@@ -41,7 +43,7 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff2}"],
       },
       devOptions: { enabled: true, type: "module" },
     }),
