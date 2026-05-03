@@ -1,0 +1,98 @@
+Update the booking flow so Step 1 is still “Choose Service,” but after a client taps a service, show a service-specific add-ons section before they continue to Date & Time.
+
+Current issue:
+The booking screen lets clients select a service, then immediately go to “Next: Date & Time.” I need the selected service to expand or reveal add-ons first.
+
+Required behavior:
+1. When a service card is tapped, keep it selected with the active border/checkmark.
+2. Directly below the selected service grid, show an “Customize Your Service” section.
+3. The add-ons shown must change based on the selected service.
+4. Each add-on should be selectable with a checkbox or toggle.
+5. Each add-on must show:
+   - Add-on name
+   - Short description
+   - Price
+6. The booking total should update live:
+   - Base service price
+   - Selected add-ons
+   - Estimated total
+   - $25 deposit required
+7. The “Next: Date & Time” button should remain disabled until a service is selected.
+8. After add-ons are selected, client can tap “Next: Date & Time.”
+9. The final booking/text message must include:
+   - Selected service
+   - Base price
+   - Selected add-ons and prices
+   - Estimated total
+   - Deposit required
+   - Preferred date/time
+   - Hair color if applicable
+   - Client name and notes
+
+Add-on logic by service:
+
+Small Knotless
+- Extra length: +$25
+- Boho curls: +$35
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Take-down service: +$35
+
+Medium Knotless
+- Extra length: +$20
+- Boho curls: +$30
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Take-down service: +$35
+
+Large Knotless
+- Extra length: +$15
+- Boho curls: +$25
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Take-down service: +$35
+
+Feed-In Braids
+- Extra length: +$15
+- Designed parts: +$15
+- Additional braid count: +$20
+- Colored hair request: +$15
+- Beads/accessories: +$10
+
+Stitch Braids
+- Extra length: +$15
+- Designed parts: +$20
+- Additional braid count: +$20
+- Colored hair request: +$15
+- Beads/accessories: +$10
+
+Bob Braids
+- Boho curls: +$30
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Triangle parts: +$20
+- Take-down service: +$35
+
+Braided Ponytail
+- Extended length: +$20
+- Wand curls: +$15
+- Crimps: +$20
+- Swoop bang detail: +$15
+- Added braid hair color request: +$15
+
+Quick Weave
+- Bob cut/style: +$20
+- Wand curls: +$15
+- Crimps: +$20
+- Leave-out blend: +$15
+- Closure install: +$30
+- Take-down service: +$35
+
+Design requirements:
+- Make the add-ons section feel premium and clean, not cluttered.
+- Use compact cards or rows with clear spacing.
+- Show a small “Optional Add-ons” label.
+- Add a total summary card near the bottom.
+- Keep the bottom button visible and mobile-friendly.
+- Use Ravishing Beauté styling and colors consistently.
+- Do not make the user leave the booking flow just to select add-ons.

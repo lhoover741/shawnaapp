@@ -1,0 +1,142 @@
+Rebuild the booking flow so it is a true booking request system instead of “Text to Book”.
+
+Main goal:
+Clients submit a booking request inside the app, and all data is sent to an admin portal with a notification. Texting should only be used for general questions, not booking.
+
+Replace current behavior:
+- Remove “Text to Book” as the primary booking action
+- Replace with “Request Appointment”
+
+Booking form (keep current layout but enhance functionality):
+Fields must include:
+- Service name (auto-filled from selected service)
+- Base price
+- Selected add-ons
+- Estimated total
+- Client name
+- Phone number
+- Preferred date
+- Preferred time
+- Hair color (1, 1B, 2, 4, or other)
+- Notes / inspiration
+
+Submission behavior:
+1. When user taps “Request Appointment”:
+   - Validate required fields (name, phone, date, time)
+   - Show loading state
+2. Send booking data to backend endpoint:
+   POST /api/bookings
+
+Booking object structure:
+{
+  service: string,
+  basePrice: number,
+  addons: [{ name: string, price: number }],
+  totalEstimate: number,
+  deposit: 25,
+  clientName: string,
+  phone: string,
+  preferredDate: string,
+  preferredTime: string,
+  hairColor: string,
+  notes: string,
+  status: "pending",
+  createdAt: timestamp
+}
+
+3. After successful submission:
+   - Show confirmation screen:
+     “Your request has been sent. You will receive confirmation shortly.”
+   - Clear form
+
+Admin portal requirements:
+Create a simple admin dashboard page (protected route):
+
+/admin
+
+Features:
+- List of booking requests
+- Each request shows:
+  - Service
+  - Client name
+  - Phone
+  - Date/time requested
+  - Add-ons
+  - Total estimate
+  - Notes
+- Status controls:
+  - Pending
+  - Approved
+  - Declined
+- Ability to update status
+
+Notification system:
+When a new booking is submitted:
+- Trigger an admin notification
+
+Options (implement at least one):
+1. Email notification (preferred)
+   - Send email with full booking details
+
+2. OR in-app notification badge in admin panel
+
+Optional upgrade:
+- Send SMS notification to admin if possible (Twilio or similar)
+
+UI updates:
+- Change bottom button text:
+  “Request Appointment”
+- Keep styling premium and consistent
+- Keep estimated total visible above button
+- Keep deposit note visible
+
+Important rules to display:
+- $25 deposit required
+- 8:30 AM – 6:00 PM by appointment
+- Closed Sunday & Monday
+- Same-day bookings require approval
+- Please come detangled to stay on schedule
+
+Keep “Text Us” option:
+- Add a smaller secondary button somewhere:
+  “Have a question? Text us”
+- This should open SMS but NOT include booking data
+
+Technical notes:
+- Store bookings in a simple database (JSON, SQLite, or Replit DB)
+- Make sure API routes work without crashing if empty
+- Prepare structure for future scaling
+
+Final goal:
+Make this feel like a real salon booking system where:
+clients submit requests → admin reviews → admin confirms
+NOT just texting back and forth
+
+Critical requirement: Cloud storage (not local)
+
+Do NOT store booking data locally in the browser (no localStorage, sessionStorage, or device-only state).
+
+All booking requests must be stored in a centralized backend/database so they are:
+- accessible from any device
+- visible in the admin portal
+- persistent across sessions
+- not lost on refresh or device change
+
+Implement one of the following:
+- Replit DB (preferred for simplicity)
+- SQLite database
+- or a simple backend database layer
+
+Requirements:
+- All bookings saved via POST /api/bookings must be written to the database
+- Admin panel must fetch from the same database using GET /api/bookings
+- Status updates (pending / approved / declined) must persist in the database
+- Data must remain after server restarts
+
+Also ensure:
+- No booking logic relies on frontend-only state
+- API is the single source of truth
+- Handle empty database state gracefully
+
+Goal:
+Booking system behaves like a real cloud-based system, not a local demo

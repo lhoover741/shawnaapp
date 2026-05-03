@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: reviews
+    description: Client reviews
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List approved reviews
+      description: Returns all admin-approved client reviews
+      responses:
+        "200":
+          description: List of approved reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: submitReview
+      tags: [reviews]
+      summary: Submit a review
+      description: Submits a new client review for admin approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitReviewRequest"
+      responses:
+        "201":
+          description: Review submitted and pending approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /reviews/featured:
+    get:
+      operationId: listFeaturedReviews
+      tags: [reviews]
+      summary: List featured reviews
+      description: Returns a curated set of featured reviews for homepage display
+      responses:
+        "200":
+          description: List of featured reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    SubmitReviewRequest:
+      type: object
+      properties:
+        clientName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        service:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - clientName
+        - rating
+        - body
+        - service
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        clientName:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: string
+        service:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        featured:
+          type: boolean
+        approved:
+          type: boolean
+      required:
+        - id
+        - clientName
+        - rating
+        - body
+        - service
+        - createdAt
+        - featured
+        - approved

@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/ravishing-beaute-pwa/dev-sw.js?dev-sw', { scope: '/ravishing-beaute-pwa/', type: 'classic' })

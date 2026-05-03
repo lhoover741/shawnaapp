@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/ravishing-beaute-pwa/"
+title = "Ravishing Beauté PWA"
+version = "1.0.0"
+id = "artifacts/ravishing-beaute-pwa"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/ravishing-beaute-pwa/" ]
+localPort = 19206
+
+[services.development]
+run = "pnpm --filter @workspace/ravishing-beaute-pwa run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ravishing-beaute-pwa", "run", "build" ]
+publicDir = "artifacts/ravishing-beaute-pwa/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19206"
+BASE_PATH = "/ravishing-beaute-pwa/"

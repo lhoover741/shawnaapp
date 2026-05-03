@@ -1,0 +1,173 @@
+Rebuild the Ravishing Beauté services flow so every service card is tappable.
+
+Main goal:
+When a client taps a service on the Services page, open a dedicated service detail/booking page for that exact service. That page should let them review the service, select applicable add-ons, see an estimated total, then tap a booking/text button that opens their text messages with a prefilled booking request including everything they selected.
+
+Required behavior:
+1. Every service card on the Services page must be clickable/tappable.
+2. Clicking a service opens a service detail page or route, such as:
+   /service/small-knotless-braids
+   /service/medium-knotless-braids
+   /service/large-knotless-braids
+   /service/feed-in-braids
+   /service/stitch-braids
+   /service/bob-braids
+   /service/sleek-ponytail
+   /service/quick-weave
+3. Each service detail page should include:
+   - Service name
+   - Starting price
+   - Estimated duration
+   - Short description
+   - Hair inclusion note when applicable
+   - Deposit note
+   - Add-on selector with checkboxes/toggles
+   - Estimated total calculation
+   - “Text to Book” button
+4. The Text to Book button must open the client’s SMS/messages app with a prefilled message.
+5. The prefilled message must include:
+   - Selected service
+   - Starting price
+   - Selected add-ons
+   - Estimated total
+   - Deposit required: $25
+   - Preferred date
+   - Preferred time
+   - Client name
+   - Hair color selection if braiding hair is included
+6. Keep the design mobile-first, polished, feminine, clean, and premium.
+7. Keep the bottom nav working.
+8. Do not use Instagram embeds.
+9. Keep Ravishing Beauté branding consistent.
+
+Important business rules:
+- $25 non-refundable deposit required.
+- Business hours are 8:30 AM to 6:00 PM by appointment.
+- Closed Sunday and Monday.
+- Same-day bookings only if approved.
+- Please come detangled to stay on schedule.
+- Braiding hair is included only in natural colors: 1, 1B, 2, and 4.
+- Do not say detangling is free.
+
+Service add-on decisions:
+
+Small Knotless Braids
+Base price: $220+
+Duration: 5–7 hrs
+Hair included: yes, natural colors only 1, 1B, 2, 4
+Add-ons:
+- Extra length: +$25
+- Boho curls: +$35
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Take-down service: +$35
+
+Medium Knotless Braids
+Base price: $180+
+Duration: 4–6 hrs
+Hair included: yes, natural colors only 1, 1B, 2, 4
+Add-ons:
+- Extra length: +$20
+- Boho curls: +$30
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Take-down service: +$35
+
+Large Knotless Braids
+Base price: $140+
+Duration: 3–4 hrs
+Hair included: yes, natural colors only 1, 1B, 2, 4
+Add-ons:
+- Extra length: +$15
+- Boho curls: +$25
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Take-down service: +$35
+
+Feed-In Braids
+Base price: $85+
+Duration: 2–3 hrs
+Hair included: yes, natural colors only 1, 1B, 2, 4
+Add-ons:
+- Extra length: +$15
+- Designed parts: +$15
+- Additional braid count: +$20
+- Colored hair request: +$15
+- Beads/accessories: +$10
+
+Stitch Braids
+Base price: $95+
+Duration: 2–4 hrs
+Hair included: yes, natural colors only 1, 1B, 2, 4
+Add-ons:
+- Extra length: +$15
+- Designed parts: +$20
+- Additional braid count: +$20
+- Colored hair request: +$15
+- Beads/accessories: +$10
+
+Bob Braids
+Base price: $150+
+Duration: 3–5 hrs
+Hair included: yes, natural colors only 1, 1B, 2, 4
+Add-ons:
+- Boho curls: +$30
+- Colored hair request: +$15
+- Beads/accessories: +$10
+- Triangle parts: +$20
+- Take-down service: +$35
+
+Sleek Ponytail
+Base price: $75+
+Duration: 1.5–2 hrs
+Hair included: no
+Add-ons:
+- Wand curls: +$15
+- Crimps: +$20
+- Extended ponytail length: +$20
+- Swoop bang detail: +$15
+- Added track/bundle styling: +$25
+
+Quick Weave
+Base price: $100+
+Duration: 2–3 hrs
+Hair included: no
+Add-ons:
+- Bob cut/style: +$20
+- Wand curls: +$15
+- Crimps: +$20
+- Leave-out blend: +$15
+- Closure install: +$30
+- Take-down service: +$35
+
+Booking form fields on service detail page:
+- Client name
+- Phone number
+- Preferred date
+- Preferred time
+- Hair color choice for braid services:
+  1
+  1B
+  2
+  4
+  Other color request
+- Notes / inspiration details
+
+Text message format:
+“Hi Shawna, I’d like to book with Ravishing Beauté.
+
+Service: [service name]
+Base price: $[base price]+
+Add-ons: [selected add-ons with prices]
+Estimated total: $[total]+
+Deposit: $25 required
+Preferred date: [date]
+Preferred time: [time]
+Hair color: [selected color if applicable]
+Name: [client name]
+Phone: [phone number]
+Notes: [notes]
+
+Please let me know if this appointment is available.”
+
+Make sure selected add-ons dynamically update the estimated total before the client texts to book.

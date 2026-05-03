@@ -1,0 +1,95 @@
+Run a full readiness audit on the Ravishing Beauté app and prepare it for public release.
+
+Goal:
+Identify anything incomplete, broken, or unpolished, and fix it so the app is production-ready for GitHub and Cloudflare deployment.
+
+Check and verify the following:
+
+1. App Structure
+- Confirm all pages exist and are functional:
+  Home
+  Services / Pricing
+  Gallery
+  About Your Stylist
+  Booking
+  Reviews
+  Contact
+  Policies
+- Ensure routing works correctly between all pages
+- No broken links or missing routes
+
+2. Services Flow (Critical)
+- Every service card is tappable
+- Each service opens its own detail page
+- Add-ons are selectable per service
+- Pricing updates dynamically based on selections
+- “Text to Book” button works on every service
+- Prefilled SMS includes:
+  service name
+  base price
+  add-ons
+  estimated total
+  deposit note
+  date/time
+  name
+  phone
+  hair color (if applicable)
+  notes
+
+3. Booking Logic
+- $25 deposit clearly shown across booking flow
+- Business hours shown: 8:30 AM – 6:00 PM
+- Closed Sunday and Monday noted
+- Same-day booking requires approval (clearly stated)
+- “Please come detangled to stay on schedule” included
+- No mention of free detangling
+
+4. UI / Design Quality
+- Mobile-first layout is clean and consistent
+- Spacing, padding, and typography feel premium
+- No overcrowded sections
+- Buttons are consistent and clearly styled
+- Navigation (top + bottom if used) works smoothly
+- No placeholder text like “lorem ipsum”
+
+5. Gallery
+- Images load correctly
+- Layout feels premium (not basic grid dump)
+- No broken images
+- No Instagram embeds
+
+6. Reviews
+- Reviews page loads correctly
+- Reviews appear styled and curated
+- If using API, confirm it does not break the UI if empty
+
+7. Contact
+- Contact form works
+- Submitting opens SMS/messages with prefilled text
+- No unnecessary instructions or clutter
+
+8. Performance & Errors
+- No console errors
+- No failed API calls
+- Pages load quickly
+- No infinite loops or broken states
+
+9. Code / Deployment Readiness
+- Clean project structure
+- No unused files or duplicate components
+- Environment variables handled properly if used
+- Ready for GitHub push
+- Ready for Cloudflare Pages deployment
+
+10. Branding & Content
+- Uses “Ravishing Beauté” consistently
+- Tone is professional, clean, and elevated
+- No outdated wording about clients bringing hair for included styles
+- Hair inclusion rule is correct:
+  natural colors 1, 1B, 2, 4 included unless otherwise specified
+
+Final Output:
+- Provide a checklist of what passed and what failed
+- Automatically fix anything minor
+- Clearly list anything that still needs manual input (images, phone number, etc.)
+- Confirm when the app is fully ready for public launch
