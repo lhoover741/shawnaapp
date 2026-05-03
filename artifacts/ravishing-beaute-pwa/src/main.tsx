@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { subscribeUser } from "./push";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -28,6 +29,13 @@ window.addEventListener("load", () => {
       const { outcome } = await deferredPrompt.userChoice;
       deferredPrompt = null;
       console.log("Install:", outcome);
+    });
+  }
+
+  const notifyBtn = document.getElementById("notifyBtn");
+  if (notifyBtn) {
+    notifyBtn.addEventListener("click", () => {
+      subscribeUser();
     });
   }
 
