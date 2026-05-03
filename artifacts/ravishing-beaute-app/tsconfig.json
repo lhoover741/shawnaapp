@@ -1,8 +1,9 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "strict": true,
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": [
         "./*"
