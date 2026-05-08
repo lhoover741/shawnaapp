@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
+type BookingStatus = "pending" | "confirmed" | "cancelled" | "archived";
+
 type Booking = {
   id: number;
   clientName: string;
@@ -10,7 +12,7 @@ type Booking = {
   preferredDate: string | null;
   flexibleDate: string;
   timePreference: string;
-  status: "pending" | "confirmed" | "cancelled";
+  status: BookingStatus;
   totalEstimate: number | null;
   notes: string | null;
   addons: string | null;
@@ -22,10 +24,13 @@ type AdminState =
   | { stage: "password" }
   | { stage: "dashboard"; token: string };
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+type BookingFilter = "all" | BookingStatus;
+
+const STATUS_COLORS: Record<BookingStatus, { bg: string; color: string }> = {
   pending: { bg: "#FEF9EC", color: "#B8860B" },
   confirmed: { bg: "#EEF7E9", color: "#3A6B28" },
   cancelled: { bg: "#FEECEC", color: "#B00020" },
+  archived: { bg: "#F3EAED", color: "#7D6268" },
 };
 
 function getDigits(value: string) {
@@ -93,15 +98,17 @@ function FilterTab({
     <button
       onClick={onClick}
       style={{
-        flex: 1,
-        padding: "8px 4px",
+        flex: "0 0 auto",
+        minWidth: 92,
+        padding: "9px 10px",
         border: "none",
         background: "none",
         cursor: "pointer",
         borderBottom: `2px solid ${active ? "#AC5D7A" : "transparent"}`,
         color: active ? "#AC5D7A" : "#7D6268",
         fontSize: 13,
-        fontWeight: active ? 600 : 400,
+        fontWeight: active ? 700 : 500,
+        whiteSpace: "nowrap",
       }}
     >
       {label}{" "}
@@ -109,7 +116,7 @@ function FilterTab({
         <span
           style={{
             fontSize: 10,
-            fontWeight: 600,
+            fontWeight: 700,
             backgroundColor: active ? "#AC5D7A" : "#E4D3D8",
             color: active ? "#fff" : "#7D6268",
             borderRadius: 10,
@@ -170,9 +177,7 @@ export default function Admin() {
   const [passwordError, setPasswordError] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<
-    "all" | "pending" | "confirmed" | "cancelled"
-  >("pending");
+  const [filter, setFilter] = useState<BookingFilter>("pending");
   const [updating, setUpdating] = useState<number | null>(null);
   const [accessChecked, setAccessChecked] = useState(false);
 
@@ -226,7 +231,7 @@ export default function Admin() {
     }
   }
 
-  async function updateStatus(id: number, status: string, token: string) {
+  async function updateStatus(id: number, status: BookingStatus, token: string) {
     setUpdating(id);
     try {
       const res = await fetch(`/api/admin/booking-requests/${id}`, {
@@ -293,14 +298,17 @@ export default function Admin() {
     );
   }
 
-  const filtered = bookings.filter(
-    (b) => filter === "all" || b.status === filter,
-  );
+  const activeBookings = bookings.filter((b) => b.status !== "archived");
+  const filtered = bookings.filter((b) => {
+    if (filter === "all") return b.status !== "archived";
+    return b.status === filter;
+  });
   const counts = {
-    all: bookings.length,
+    all: activeBookings.length,
     pending: bookings.filter((b) => b.status === "pending").length,
     confirmed: bookings.filter((b) => b.status === "confirmed").length,
     cancelled: bookings.filter((b) => b.status === "cancelled").length,
+    archived: bookings.filter((b) => b.status === "archived").length,
   };
   const token = state.stage === "dashboard" ? state.token : "";
 
@@ -332,29 +340,12 @@ export default function Admin() {
               margin: "0 auto 20px",
             }}
           >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#AC5D7A"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#AC5D7A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <p
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 22,
-              fontWeight: 700,
-              color: "#201B1C",
-              marginBottom: 8,
-            }}
-          >
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#201B1C", marginBottom: 8 }}>
             Admin Access
           </p>
           <p style={{ fontSize: 13, color: "#7D6268", marginBottom: 28 }}>
@@ -386,39 +377,11 @@ export default function Admin() {
               color: "#201B1C",
             }}
           />
-          {pinError && (
-            <p style={{ color: "#E04040", fontSize: 12, marginTop: 8 }}>
-              {pinError}
-            </p>
-          )}
-          <button
-            onClick={handlePinSubmit}
-            style={{
-              width: "100%",
-              marginTop: 16,
-              padding: "15px 0",
-              backgroundColor: "#AC5D7A",
-              color: "#fff",
-              border: "none",
-              borderRadius: 12,
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
+          {pinError && <p style={{ color: "#E04040", fontSize: 12, marginTop: 8 }}>{pinError}</p>}
+          <button onClick={handlePinSubmit} style={{ width: "100%", marginTop: 16, padding: "15px 0", backgroundColor: "#AC5D7A", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
             Continue
           </button>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#7D6268",
-              fontSize: 13,
-              cursor: "pointer",
-              marginTop: 16,
-            }}
-          >
+          <button onClick={handleLogout} style={{ background: "none", border: "none", color: "#7D6268", fontSize: 13, cursor: "pointer", marginTop: 16 }}>
             Logout
           </button>
         </div>
@@ -429,28 +392,9 @@ export default function Admin() {
   // Password screen
   if (state.stage === "password") {
     return (
-      <div
-        style={{
-          backgroundColor: "#F9F5F0",
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-          animation: "adminFadeScale 220ms ease-out",
-        }}
-      >
+      <div style={{ backgroundColor: "#F9F5F0", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, animation: "adminFadeScale 220ms ease-out" }}>
         <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
-          <p
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 22,
-              fontWeight: 700,
-              color: "#201B1C",
-              marginBottom: 8,
-            }}
-          >
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#201B1C", marginBottom: 8 }}>
             Admin Password
           </p>
           <p style={{ fontSize: 13, color: "#7D6268", marginBottom: 28 }}>
@@ -466,51 +410,13 @@ export default function Admin() {
             onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
             placeholder="Password"
             autoFocus
-            style={{
-              width: "100%",
-              padding: "16px 14px",
-              border: `1.5px solid ${passwordError ? "#E04040" : "#E4D3D8"}`,
-              borderRadius: 12,
-              fontSize: 15,
-              outline: "none",
-              backgroundColor: "#fff",
-              boxSizing: "border-box",
-              color: "#201B1C",
-            }}
+            style={{ width: "100%", padding: "16px 14px", border: `1.5px solid ${passwordError ? "#E04040" : "#E4D3D8"}`, borderRadius: 12, fontSize: 15, outline: "none", backgroundColor: "#fff", boxSizing: "border-box", color: "#201B1C" }}
           />
-          {passwordError && (
-            <p style={{ color: "#E04040", fontSize: 12, marginTop: 8 }}>
-              {passwordError}
-            </p>
-          )}
-          <button
-            onClick={handlePasswordSubmit}
-            style={{
-              width: "100%",
-              marginTop: 16,
-              padding: "15px 0",
-              backgroundColor: "#AC5D7A",
-              color: "#fff",
-              border: "none",
-              borderRadius: 12,
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
+          {passwordError && <p style={{ color: "#E04040", fontSize: 12, marginTop: 8 }}>{passwordError}</p>}
+          <button onClick={handlePasswordSubmit} style={{ width: "100%", marginTop: 16, padding: "15px 0", backgroundColor: "#AC5D7A", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
             Sign In
           </button>
-          <button
-            onClick={() => setState({ stage: "pin" })}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#7D6268",
-              fontSize: 13,
-              cursor: "pointer",
-              marginTop: 16,
-            }}
-          >
+          <button onClick={() => setState({ stage: "pin" })} style={{ background: "none", border: "none", color: "#7D6268", fontSize: 13, cursor: "pointer", marginTop: 16 }}>
             ← Back
           </button>
         </div>
@@ -520,66 +426,17 @@ export default function Admin() {
 
   // Dashboard
   return (
-    <div
-      style={{
-        backgroundColor: "#F9F5F0",
-        minHeight: "100vh",
-        paddingBottom: 118,
-        animation: "adminFadeScale 220ms ease-out",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: "calc(env(safe-area-inset-top, 0px) + 16px) 16px 0",
-          backgroundColor: "#fff",
-          borderBottom: "1px solid #E4D3D8",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 12,
-          }}
-        >
-          <button
-            onClick={handleLogout}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#7D6268",
-              fontSize: 13,
-            }}
-          >
+    <div style={{ backgroundColor: "#F9F5F0", minHeight: "100vh", paddingBottom: 118, animation: "adminFadeScale 220ms ease-out" }}>
+      <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 16px) 16px 0", backgroundColor: "#fff", borderBottom: "1px solid #E4D3D8" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <button onClick={handleLogout} style={{ background: "none", border: "none", cursor: "pointer", color: "#7D6268", fontSize: 13 }}>
             Logout
           </button>
-          <p
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 18,
-              fontWeight: 700,
-              color: "#201B1C",
-            }}
-          >
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#201B1C" }}>
             Admin Dashboard
           </p>
-          <button
-            onClick={() => loadBookings(token)}
-            style={{ background: "none", border: "none", cursor: "pointer" }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#7D6268"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+          <button onClick={() => loadBookings(token)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7D6268" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10" />
               <polyline points="1 20 1 14 7 14" />
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
@@ -587,352 +444,107 @@ export default function Admin() {
           </button>
         </div>
 
-        {/* Stats strip */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            gap: 8,
-            paddingBottom: 12,
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, paddingBottom: 12 }}>
           {[
-            {
-              label: "Pending",
-              value: counts.pending,
-              color: "#B8860B",
-              bg: "#FEF9EC",
-            },
-            {
-              label: "Confirmed",
-              value: counts.confirmed,
-              color: "#3A6B28",
-              bg: "#EEF7E9",
-            },
-            {
-              label: "Cancelled",
-              value: counts.cancelled,
-              color: "#B00020",
-              bg: "#FEECEC",
-            },
-            {
-              label: "Total",
-              value: counts.all,
-              color: "#201B1C",
-              bg: "#F3EAED",
-            },
+            { label: "Pending", value: counts.pending, color: "#B8860B", bg: "#FEF9EC" },
+            { label: "Confirmed", value: counts.confirmed, color: "#3A6B28", bg: "#EEF7E9" },
+            { label: "Cancelled", value: counts.cancelled, color: "#B00020", bg: "#FEECEC" },
+            { label: "Active", value: counts.all, color: "#201B1C", bg: "#F3EAED" },
           ].map((s) => (
-            <div
-              key={s.label}
-              style={{
-                backgroundColor: s.bg,
-                borderRadius: 10,
-                padding: "8px 6px",
-                textAlign: "center",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: s.color,
-                  margin: 0,
-                }}
-              >
-                {s.value}
-              </p>
-              <p
-                style={{
-                  fontSize: 9,
-                  color: s.color,
-                  fontWeight: 600,
-                  margin: 0,
-                  letterSpacing: 0.5,
-                }}
-              >
-                {s.label.toUpperCase()}
-              </p>
+            <div key={s.label} style={{ backgroundColor: s.bg, borderRadius: 10, padding: "8px 6px", textAlign: "center" }}>
+              <p style={{ fontSize: 20, fontWeight: 700, color: s.color, margin: 0 }}>{s.value}</p>
+              <p style={{ fontSize: 9, color: s.color, fontWeight: 600, margin: 0, letterSpacing: 0.5 }}>{s.label.toUpperCase()}</p>
             </div>
           ))}
         </div>
 
-        {/* Filter tabs */}
-        <div style={{ display: "flex", borderTop: "1px solid #F3EAED" }}>
-          <FilterTab
-            label="Pending"
-            active={filter === "pending"}
-            count={counts.pending}
-            onClick={() => setFilter("pending")}
-          />
-          <FilterTab
-            label="Confirmed"
-            active={filter === "confirmed"}
-            count={counts.confirmed}
-            onClick={() => setFilter("confirmed")}
-          />
-          <FilterTab
-            label="Cancelled"
-            active={filter === "cancelled"}
-            count={counts.cancelled}
-            onClick={() => setFilter("cancelled")}
-          />
-          <FilterTab
-            label="All"
-            active={filter === "all"}
-            count={counts.all}
-            onClick={() => setFilter("all")}
-          />
+        <div style={{ display: "flex", borderTop: "1px solid #F3EAED", overflowX: "auto" }}>
+          <FilterTab label="Pending" active={filter === "pending"} count={counts.pending} onClick={() => setFilter("pending")} />
+          <FilterTab label="Confirmed" active={filter === "confirmed"} count={counts.confirmed} onClick={() => setFilter("confirmed")} />
+          <FilterTab label="Cancelled" active={filter === "cancelled"} count={counts.cancelled} onClick={() => setFilter("cancelled")} />
+          <FilterTab label="All Active" active={filter === "all"} count={counts.all} onClick={() => setFilter("all")} />
+          <FilterTab label="Archive" active={filter === "archived"} count={counts.archived} onClick={() => setFilter("archived")} />
         </div>
       </div>
 
-      {/* Bookings list */}
       <div style={{ padding: "12px 16px 0" }}>
         {loading ? (
-          <div
-            style={{ textAlign: "center", paddingTop: 48, color: "#7D6268" }}
-          >
-            Loading bookings…
-          </div>
+          <div style={{ textAlign: "center", paddingTop: 48, color: "#7D6268" }}>Loading bookings…</div>
         ) : filtered.length === 0 ? (
-          <div
-            style={{ textAlign: "center", paddingTop: 48, color: "#7D6268" }}
-          >
+          <div style={{ textAlign: "center", paddingTop: 48, color: "#7D6268" }}>
             <p style={{ fontSize: 14 }}>
-              No {filter !== "all" ? filter : ""} bookings yet.
+              No {filter !== "all" ? filter : "active"} bookings yet.
             </p>
           </div>
         ) : (
           filtered.map((b) => {
-            const { bg, color } = STATUS_COLORS[b.status] ?? {
-              bg: "#F3EAED",
-              color: "#7D6268",
-            };
+            const { bg, color } = STATUS_COLORS[b.status] ?? STATUS_COLORS.pending;
             const dateLabel = getDateLabel(b);
             const phoneDigits = getDigits(b.phone);
             const smsHref = `sms:${phoneDigits || b.phone}?body=${encodeURIComponent(getClientTextMessage(b))}`;
             const telHref = `tel:${phoneDigits || b.phone}`;
             return (
-              <div
-                key={b.id}
-                style={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #E4D3D8",
-                  borderRadius: 16,
-                  padding: 16,
-                  marginBottom: 12,
-                  boxShadow: "0 10px 24px rgba(82,42,57,0.045)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    marginBottom: 12,
-                  }}
-                >
+              <div key={b.id} style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 16, marginBottom: 12, boxShadow: "0 10px 24px rgba(82,42,57,0.045)", opacity: b.status === "archived" ? 0.82 : 1 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                   <div>
-                    <p
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 800,
-                        color: "#201B1C",
-                        margin: 0,
-                      }}
-                    >
-                      {b.clientName}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: "#7D6268",
-                        margin: "3px 0 0",
-                      }}
-                    >
-                      {b.phone}
-                    </p>
+                    <p style={{ fontSize: 16, fontWeight: 800, color: "#201B1C", margin: 0 }}>{b.clientName}</p>
+                    <p style={{ fontSize: 12, color: "#7D6268", margin: "3px 0 0" }}>{b.phone}</p>
                   </div>
-                  <span
-                    style={{
-                      backgroundColor: bg,
-                      color,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: "5px 11px",
-                      borderRadius: 50,
-                      flexShrink: 0,
-                    }}
-                  >
+                  <span style={{ backgroundColor: bg, color, fontSize: 11, fontWeight: 800, padding: "5px 11px", borderRadius: 50, flexShrink: 0 }}>
                     {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
                   </span>
                 </div>
 
-                <div
-                  style={{
-                    backgroundColor: "#FFFBFA",
-                    border: "1px solid #F3EAED",
-                    borderRadius: 13,
-                    padding: "5px 12px",
-                    marginBottom: 12,
-                  }}
-                >
+                <div style={{ backgroundColor: "#FFFBFA", border: "1px solid #F3EAED", borderRadius: 13, padding: "5px 12px", marginBottom: 12 }}>
                   <DetailRow label="Service" value={b.serviceLabel} />
                   <DetailRow label="Date" value={dateLabel} />
-                  <DetailRow
-                    label="Time"
-                    value={getTimePreferenceLabel(b.timePreference)}
-                  />
-                  <DetailRow
-                    label="Estimate"
-                    value={b.totalEstimate ? `$${b.totalEstimate}+` : "Not listed"}
-                  />
+                  <DetailRow label="Time" value={getTimePreferenceLabel(b.timePreference)} />
+                  <DetailRow label="Estimate" value={b.totalEstimate ? `$${b.totalEstimate}+` : "Not listed"} />
                   <DetailRow label="Deposit" value="$25 required" />
-                  <DetailRow
-                    label="Submitted"
-                    value={getSubmittedLabel(b.createdAt)}
-                  />
+                  <DetailRow label="Submitted" value={getSubmittedLabel(b.createdAt)} />
                   {b.addons && <DetailRow label="Add-ons" value={b.addons} />}
                 </div>
 
                 {b.notes && (
-                  <div
-                    style={{
-                      backgroundColor: "#FBF4F6",
-                      border: "1px solid #F0DDE5",
-                      borderRadius: 12,
-                      padding: 11,
-                      marginBottom: 12,
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: 10,
-                        letterSpacing: 1.2,
-                        color: "#7D6268",
-                        fontWeight: 800,
-                        marginBottom: 4,
-                      }}
-                    >
-                      CLIENT NOTES
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 12.5,
-                        color: "#5E4B51",
-                        lineHeight: 1.45,
-                        margin: 0,
-                      }}
-                    >
-                      {b.notes}
-                    </p>
+                  <div style={{ backgroundColor: "#FBF4F6", border: "1px solid #F0DDE5", borderRadius: 12, padding: 11, marginBottom: 12 }}>
+                    <p style={{ fontSize: 10, letterSpacing: 1.2, color: "#7D6268", fontWeight: 800, marginBottom: 4 }}>CLIENT NOTES</p>
+                    <p style={{ fontSize: 12.5, color: "#5E4B51", lineHeight: 1.45, margin: 0 }}>{b.notes}</p>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 8,
-                    marginBottom: 8,
-                  }}
-                >
-                  <a
-                    href={smsHref}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "10px 0",
-                      backgroundColor: "#F3EAED",
-                      color: "#AC5D7A",
-                      border: "1px solid #E4D3D8",
-                      borderRadius: 10,
-                      fontSize: 13,
-                      fontWeight: 800,
-                      textDecoration: "none",
-                    }}
-                  >
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                  <a href={smsHref} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 0", backgroundColor: "#F3EAED", color: "#AC5D7A", border: "1px solid #E4D3D8", borderRadius: 10, fontSize: 13, fontWeight: 800, textDecoration: "none" }}>
                     Text Client
                   </a>
-                  <a
-                    href={telHref}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "10px 0",
-                      backgroundColor: "#F9F5F0",
-                      color: "#201B1C",
-                      border: "1px solid #E4D3D8",
-                      borderRadius: 10,
-                      fontSize: 13,
-                      fontWeight: 800,
-                      textDecoration: "none",
-                    }}
-                  >
+                  <a href={telHref} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 0", backgroundColor: "#F9F5F0", color: "#201B1C", border: "1px solid #E4D3D8", borderRadius: 10, fontSize: 13, fontWeight: 800, textDecoration: "none" }}>
                     Call Client
                   </a>
                 </div>
 
                 {b.status === "pending" && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => updateStatus(b.id, "confirmed", token)}
-                      disabled={updating === b.id}
-                      style={{
-                        flex: 1,
-                        padding: "10px 0",
-                        backgroundColor: "#EEF7E9",
-                        color: "#3A6B28",
-                        border: "1px solid #C6E3BD",
-                        borderRadius: 10,
-                        fontSize: 13,
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        opacity: updating === b.id ? 0.6 : 1,
-                      }}
-                    >
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <button onClick={() => updateStatus(b.id, "confirmed", token)} disabled={updating === b.id} style={{ flex: 1, padding: "10px 0", backgroundColor: "#EEF7E9", color: "#3A6B28", border: "1px solid #C6E3BD", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer", opacity: updating === b.id ? 0.6 : 1 }}>
                       {updating === b.id ? "…" : "✓ Confirm"}
                     </button>
-                    <button
-                      onClick={() => updateStatus(b.id, "cancelled", token)}
-                      disabled={updating === b.id}
-                      style={{
-                        flex: 1,
-                        padding: "10px 0",
-                        backgroundColor: "#FEECEC",
-                        color: "#B00020",
-                        border: "1px solid #F5BDBD",
-                        borderRadius: 10,
-                        fontSize: 13,
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        opacity: updating === b.id ? 0.6 : 1,
-                      }}
-                    >
+                    <button onClick={() => updateStatus(b.id, "cancelled", token)} disabled={updating === b.id} style={{ flex: 1, padding: "10px 0", backgroundColor: "#FEECEC", color: "#B00020", border: "1px solid #F5BDBD", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer", opacity: updating === b.id ? 0.6 : 1 }}>
                       Cancel
                     </button>
                   </div>
                 )}
-                {b.status !== "pending" && (
-                  <button
-                    onClick={() => updateStatus(b.id, "pending", token)}
-                    disabled={updating === b.id}
-                    style={{
-                      width: "100%",
-                      padding: "10px 0",
-                      backgroundColor: "#F3EAED",
-                      color: "#7D6268",
-                      border: "1px solid #E4D3D8",
-                      borderRadius: 10,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      opacity: updating === b.id ? 0.6 : 1,
-                    }}
-                  >
+
+                {b.status !== "pending" && b.status !== "archived" && (
+                  <button onClick={() => updateStatus(b.id, "pending", token)} disabled={updating === b.id} style={{ width: "100%", padding: "10px 0", backgroundColor: "#F3EAED", color: "#7D6268", border: "1px solid #E4D3D8", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: updating === b.id ? 0.6 : 1, marginBottom: 8 }}>
                     Revert to pending
+                  </button>
+                )}
+
+                {b.status === "archived" ? (
+                  <button onClick={() => updateStatus(b.id, "pending", token)} disabled={updating === b.id} style={{ width: "100%", padding: "10px 0", backgroundColor: "#fff", color: "#AC5D7A", border: "1px solid #D6A9BA", borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: "pointer", opacity: updating === b.id ? 0.6 : 1 }}>
+                    Restore to pending
+                  </button>
+                ) : (
+                  <button onClick={() => updateStatus(b.id, "archived", token)} disabled={updating === b.id} style={{ width: "100%", padding: "10px 0", backgroundColor: "transparent", color: "#7D6268", border: "1px dashed #D8C3C9", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: updating === b.id ? 0.6 : 1 }}>
+                    Archive booking
                   </button>
                 )}
               </div>
