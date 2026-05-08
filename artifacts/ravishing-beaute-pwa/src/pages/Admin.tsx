@@ -28,6 +28,56 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   cancelled: { bg: "#FEECEC", color: "#B00020" },
 };
 
+function getDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function getTimePreferenceLabel(value: string) {
+  if (value === "morning") return "Morning · 8:30 AM–12 PM";
+  if (value === "afternoon") return "Afternoon · 12 PM–6 PM";
+  return "Flexible time";
+}
+
+function getDateLabel(booking: Booking) {
+  if (booking.preferredDate) {
+    return new Date(`${booking.preferredDate}T12:00:00`).toLocaleDateString(
+      "en-US",
+      { weekday: "short", month: "short", day: "numeric" },
+    );
+  }
+
+  return booking.flexibleDate === "true" ? "Flexible date" : "No date selected";
+}
+
+function getSubmittedLabel(value: string) {
+  if (!value) return "Recently submitted";
+
+  try {
+    return new Date(value).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "Recently submitted";
+  }
+}
+
+function getClientTextMessage(booking: Booking) {
+  const dateLabel = getDateLabel(booking);
+
+  if (booking.status === "confirmed") {
+    return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. Your appointment request for ${booking.serviceLabel} is confirmed for ${dateLabel}. Your $25 deposit is required to secure the appointment.`;
+  }
+
+  if (booking.status === "cancelled") {
+    return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. I reviewed your request for ${booking.serviceLabel}, but I am unable to confirm that appointment as submitted. Please send another preferred date or time so we can find a better option.`;
+  }
+
+  return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. I received your booking request for ${booking.serviceLabel}. I am reviewing availability now and will confirm shortly.`;
+}
+
 function FilterTab({
   label,
   active,
@@ -74,6 +124,43 @@ function FilterTab({
   );
 }
 
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "7px 0",
+        borderBottom: "1px solid #F3EAED",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 11,
+          color: "#7D6268",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: 0.7,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 12,
+          color: "#201B1C",
+          fontWeight: 600,
+          textAlign: "right",
+          lineHeight: 1.35,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [, navigate] = useLocation();
   const [state, setState] = useState<AdminState>({ stage: "pin" });
@@ -110,6 +197,7 @@ export default function Admin() {
   function handleLogout() {
     try {
       localStorage.removeItem("admin_access");
+      localStorage.removeItem("admin_token");
     } catch {
       // Ignore storage failures and still leave the admin route.
     }
@@ -183,6 +271,7 @@ export default function Admin() {
       const data = (await res.json()) as { token?: string; error?: string };
       if (res.ok && data.token) {
         localStorage.setItem("admin_access", "true");
+        localStorage.setItem("admin_token", data.token);
         setState({ stage: "dashboard", token: data.token });
       } else {
         setPasswordError(data.error ?? "Incorrect password");
@@ -435,7 +524,7 @@ export default function Admin() {
       style={{
         backgroundColor: "#F9F5F0",
         minHeight: "100vh",
-        paddingBottom: 40,
+        paddingBottom: 118,
         animation: "adminFadeScale 220ms ease-out",
       }}
     >
@@ -618,38 +707,36 @@ export default function Admin() {
               bg: "#F3EAED",
               color: "#7D6268",
             };
-            const dateLabel = b.preferredDate
-              ? new Date(b.preferredDate + "T12:00:00").toLocaleDateString(
-                  "en-US",
-                  { weekday: "short", month: "short", day: "numeric" },
-                )
-              : b.flexibleDate === "true"
-                ? "Flexible"
-                : "No date";
+            const dateLabel = getDateLabel(b);
+            const phoneDigits = getDigits(b.phone);
+            const smsHref = `sms:${phoneDigits || b.phone}?body=${encodeURIComponent(getClientTextMessage(b))}`;
+            const telHref = `tel:${phoneDigits || b.phone}`;
             return (
               <div
                 key={b.id}
                 style={{
                   backgroundColor: "#fff",
                   border: "1px solid #E4D3D8",
-                  borderRadius: 14,
+                  borderRadius: 16,
                   padding: 16,
-                  marginBottom: 10,
+                  marginBottom: 12,
+                  boxShadow: "0 10px 24px rgba(82,42,57,0.045)",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     justifyContent: "space-between",
-                    marginBottom: 8,
+                    gap: 12,
+                    marginBottom: 12,
                   }}
                 >
                   <div>
                     <p
                       style={{
-                        fontSize: 15,
-                        fontWeight: 600,
+                        fontSize: 16,
+                        fontWeight: 800,
                         color: "#201B1C",
                         margin: 0,
                       }}
@@ -660,7 +747,7 @@ export default function Admin() {
                       style={{
                         fontSize: 12,
                         color: "#7D6268",
-                        margin: "2px 0 0",
+                        margin: "3px 0 0",
                       }}
                     >
                       {b.phone}
@@ -671,58 +758,123 @@ export default function Admin() {
                       backgroundColor: bg,
                       color,
                       fontSize: 11,
-                      fontWeight: 600,
-                      padding: "3px 10px",
+                      fontWeight: 800,
+                      padding: "5px 11px",
                       borderRadius: 50,
+                      flexShrink: 0,
                     }}
                   >
                     {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
                   </span>
                 </div>
+
                 <div
                   style={{
-                    display: "flex",
-                    gap: 12,
-                    marginBottom: 10,
-                    flexWrap: "wrap",
+                    backgroundColor: "#FFFBFA",
+                    border: "1px solid #F3EAED",
+                    borderRadius: 13,
+                    padding: "5px 12px",
+                    marginBottom: 12,
                   }}
                 >
-                  <span
-                    style={{ fontSize: 12, color: "#201B1C", fontWeight: 500 }}
-                  >
-                    {b.serviceLabel}
-                  </span>
-                  <span style={{ fontSize: 12, color: "#7D6268" }}>·</span>
-                  <span style={{ fontSize: 12, color: "#7D6268" }}>
-                    {dateLabel}
-                  </span>
-                  {b.totalEstimate && (
-                    <>
-                      <span style={{ fontSize: 12, color: "#7D6268" }}>·</span>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          color: "#D9A96A",
-                          fontWeight: 600,
-                        }}
-                      >
-                        ${b.totalEstimate}+
-                      </span>
-                    </>
-                  )}
+                  <DetailRow label="Service" value={b.serviceLabel} />
+                  <DetailRow label="Date" value={dateLabel} />
+                  <DetailRow
+                    label="Time"
+                    value={getTimePreferenceLabel(b.timePreference)}
+                  />
+                  <DetailRow
+                    label="Estimate"
+                    value={b.totalEstimate ? `$${b.totalEstimate}+` : "Not listed"}
+                  />
+                  <DetailRow label="Deposit" value="$25 required" />
+                  <DetailRow
+                    label="Submitted"
+                    value={getSubmittedLabel(b.createdAt)}
+                  />
+                  {b.addons && <DetailRow label="Add-ons" value={b.addons} />}
                 </div>
+
                 {b.notes && (
-                  <p
+                  <div
                     style={{
-                      fontSize: 12,
-                      color: "#7D6268",
-                      marginBottom: 10,
-                      fontStyle: "italic",
+                      backgroundColor: "#FBF4F6",
+                      border: "1px solid #F0DDE5",
+                      borderRadius: 12,
+                      padding: 11,
+                      marginBottom: 12,
                     }}
                   >
-                    "{b.notes}"
-                  </p>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: 1.2,
+                        color: "#7D6268",
+                        fontWeight: 800,
+                        marginBottom: 4,
+                      }}
+                    >
+                      CLIENT NOTES
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        color: "#5E4B51",
+                        lineHeight: 1.45,
+                        margin: 0,
+                      }}
+                    >
+                      {b.notes}
+                    </p>
+                  </div>
                 )}
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <a
+                    href={smsHref}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "10px 0",
+                      backgroundColor: "#F3EAED",
+                      color: "#AC5D7A",
+                      border: "1px solid #E4D3D8",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Text Client
+                  </a>
+                  <a
+                    href={telHref}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "10px 0",
+                      backgroundColor: "#F9F5F0",
+                      color: "#201B1C",
+                      border: "1px solid #E4D3D8",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Call Client
+                  </a>
+                </div>
+
                 {b.status === "pending" && (
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -730,13 +882,13 @@ export default function Admin() {
                       disabled={updating === b.id}
                       style={{
                         flex: 1,
-                        padding: "9px 0",
+                        padding: "10px 0",
                         backgroundColor: "#EEF7E9",
                         color: "#3A6B28",
                         border: "1px solid #C6E3BD",
-                        borderRadius: 8,
+                        borderRadius: 10,
                         fontSize: 13,
-                        fontWeight: 600,
+                        fontWeight: 800,
                         cursor: "pointer",
                         opacity: updating === b.id ? 0.6 : 1,
                       }}
@@ -748,13 +900,13 @@ export default function Admin() {
                       disabled={updating === b.id}
                       style={{
                         flex: 1,
-                        padding: "9px 0",
+                        padding: "10px 0",
                         backgroundColor: "#FEECEC",
                         color: "#B00020",
                         border: "1px solid #F5BDBD",
-                        borderRadius: 8,
+                        borderRadius: 10,
                         fontSize: 13,
-                        fontWeight: 600,
+                        fontWeight: 800,
                         cursor: "pointer",
                         opacity: updating === b.id ? 0.6 : 1,
                       }}
@@ -769,13 +921,13 @@ export default function Admin() {
                     disabled={updating === b.id}
                     style={{
                       width: "100%",
-                      padding: "9px 0",
+                      padding: "10px 0",
                       backgroundColor: "#F3EAED",
                       color: "#7D6268",
                       border: "1px solid #E4D3D8",
-                      borderRadius: 8,
+                      borderRadius: 10,
                       fontSize: 12,
-                      fontWeight: 500,
+                      fontWeight: 700,
                       cursor: "pointer",
                       opacity: updating === b.id ? 0.6 : 1,
                     }}
