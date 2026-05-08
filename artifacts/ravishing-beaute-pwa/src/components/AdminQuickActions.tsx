@@ -1,5 +1,17 @@
 import { useLocation } from "wouter";
 
+const buttonBase = {
+  padding: "12px 6px",
+  border: "1px solid rgba(255,255,255,0.28)",
+  borderRadius: 15,
+  color: "#fff",
+  boxShadow: "0 18px 42px rgba(82,42,57,0.18)",
+  fontSize: 11.5,
+  fontWeight: 800,
+  cursor: "pointer",
+  WebkitTapHighlightColor: "transparent",
+} as const;
+
 export default function AdminQuickActions() {
   const [location, navigate] = useLocation();
 
@@ -9,9 +21,9 @@ export default function AdminQuickActions() {
     <div
       style={{
         position: "fixed",
-        left: 16,
-        right: 16,
-        bottom: "calc(18px + env(safe-area-inset-bottom, 0px))",
+        left: 12,
+        right: 12,
+        bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
         zIndex: 80,
         pointerEvents: "none",
       }}
@@ -19,44 +31,37 @@ export default function AdminQuickActions() {
       <div
         style={{
           width: "100%",
-          maxWidth: 620,
+          maxWidth: 680,
           margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr 1fr",
-          gap: 7,
+          gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
+          gap: 6,
           pointerEvents: "auto",
         }}
       >
         <button
           onClick={() => navigate("/admin/deposits")}
           style={{
-            padding: "13px 6px",
-            border: "1px solid rgba(255,255,255,0.28)",
-            borderRadius: 15,
+            ...buttonBase,
             background: "linear-gradient(135deg, #3A6B28, #1E3A17)",
-            color: "#fff",
-            boxShadow: "0 18px 42px rgba(82,42,57,0.18)",
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: "pointer",
-            WebkitTapHighlightColor: "transparent",
           }}
         >
           Deposits
         </button>
         <button
+          onClick={() => navigate("/admin/notes")}
+          style={{
+            ...buttonBase,
+            background: "linear-gradient(135deg, #49595A, #222D2F)",
+          }}
+        >
+          Notes
+        </button>
+        <button
           onClick={() => navigate("/admin/schedule")}
           style={{
-            padding: "13px 6px",
-            border: "1px solid rgba(255,255,255,0.28)",
-            borderRadius: 15,
+            ...buttonBase,
             background: "linear-gradient(135deg, #B9874D, #7A5C1E)",
-            color: "#fff",
-            boxShadow: "0 18px 42px rgba(82,42,57,0.18)",
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: "pointer",
-            WebkitTapHighlightColor: "transparent",
           }}
         >
           Schedule
@@ -64,16 +69,8 @@ export default function AdminQuickActions() {
         <button
           onClick={() => navigate("/admin/tools")}
           style={{
-            padding: "13px 6px",
-            border: "1px solid rgba(255,255,255,0.28)",
-            borderRadius: 15,
+            ...buttonBase,
             background: "linear-gradient(135deg, #2A1D22, #6B1F3E)",
-            color: "#fff",
-            boxShadow: "0 18px 42px rgba(82,42,57,0.22)",
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: "pointer",
-            WebkitTapHighlightColor: "transparent",
           }}
         >
           Tools
@@ -81,16 +78,8 @@ export default function AdminQuickActions() {
         <button
           onClick={() => navigate("/admin/pricing")}
           style={{
-            padding: "13px 6px",
-            border: "1px solid rgba(255,255,255,0.28)",
-            borderRadius: 15,
+            ...buttonBase,
             background: "linear-gradient(135deg, #AC5D7A, #7E3856)",
-            color: "#fff",
-            boxShadow: "0 18px 42px rgba(82,42,57,0.28)",
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: "pointer",
-            WebkitTapHighlightColor: "transparent",
           }}
         >
           Pricing
