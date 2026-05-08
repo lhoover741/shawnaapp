@@ -70,6 +70,14 @@ function appleCashMessage(booking: Booking) {
   return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. Your $25 deposit is needed to secure your ${booking.serviceLabel} appointment request for ${getShortDateLabel(booking.preferredDate, booking.flexibleDate)}. You can tap the $25 amount in this iMessage and send it with Apple Cash. Please reply once sent.`;
 }
 
+function prepReminderMessage(booking: Booking) {
+  const depositLine = booking.depositPaid
+    ? "Your deposit is marked received."
+    : "Your $25 deposit still needs to be sent to secure the appointment.";
+
+  return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté confirming your ${booking.serviceLabel} appointment request for ${getShortDateLabel(booking.preferredDate, booking.flexibleDate)}. Please come detangled to stay on schedule. ${depositLine} For braiding styles, natural colors 1, 1B, 2, and 4 are included unless we discussed another color. Reply here with any questions before your appointment.`;
+}
+
 function isToday(date: string | null) {
   if (!date) return false;
   const now = new Date();
@@ -326,6 +334,7 @@ export default function AdminSchedule() {
                 {grouped[key].map((booking) => {
                   const phoneDigits = getDigits(booking.phone);
                   const appleCashHref = `sms:${phoneDigits || booking.phone}?body=${encodeURIComponent(appleCashMessage(booking))}`;
+                  const prepHref = `sms:${phoneDigits || booking.phone}?body=${encodeURIComponent(prepReminderMessage(booking))}`;
                   return (
                     <div key={booking.id} style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: "0 10px 24px rgba(82,42,57,0.045)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
@@ -354,12 +363,14 @@ export default function AdminSchedule() {
                         <a href={`tel:${phoneDigits || booking.phone}`} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#F9F5F0", color: "#201B1C", border: "1px solid #E4D3D8", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Call</a>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                         <a href={appleCashHref} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#FEF9EC", color: "#8A6509", border: "1px solid #EDD9A3", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Apple Cash Text</a>
                         <button onClick={() => setDepositPaid(booking.id, !booking.depositPaid)} disabled={updating === booking.id} style={{ padding: "10px 0", borderRadius: 10, backgroundColor: booking.depositPaid ? "#FEECEC" : "#EEF7E9", color: booking.depositPaid ? "#B00020" : "#3A6B28", border: `1px solid ${booking.depositPaid ? "#F5BDBD" : "#C6E3BD"}`, fontSize: 13, fontWeight: 800, opacity: updating === booking.id ? 0.6 : 1 }}>
                           {booking.depositPaid ? "Mark Unpaid" : "Mark Paid"}
                         </button>
                       </div>
+
+                      <a href={prepHref} style={{ display: "block", textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#F7F1EF", color: "#6E565C", border: "1px solid #E4D3D8", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Send Prep Reminder</a>
                     </div>
                   );
                 })}
