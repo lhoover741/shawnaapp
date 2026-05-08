@@ -2,6 +2,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import BottomNav from "@/components/BottomNav";
+import AdminQuickActions from "@/components/AdminQuickActions";
 import Home from "@/pages/Home";
 import Gallery from "@/pages/Gallery";
 import Services from "@/pages/Services";
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
+      <AdminQuickActions />
       <BottomNav />
     </>
   );
