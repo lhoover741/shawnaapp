@@ -34,11 +34,20 @@ export default function AdminQuickActions() {
           maxWidth: 680,
           margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
+          gridTemplateColumns: "1fr 1fr 1fr",
           gap: 6,
           pointerEvents: "auto",
         }}
       >
+        <button
+          onClick={() => navigate("/admin/notifications")}
+          style={{
+            ...buttonBase,
+            background: "linear-gradient(135deg, #97AFB0, #49595A)",
+          }}
+        >
+          Notify
+        </button>
         <button
           onClick={() => navigate("/admin/deposits")}
           style={{
@@ -49,15 +58,6 @@ export default function AdminQuickActions() {
           Deposits
         </button>
         <button
-          onClick={() => navigate("/admin/notes")}
-          style={{
-            ...buttonBase,
-            background: "linear-gradient(135deg, #49595A, #222D2F)",
-          }}
-        >
-          Notes
-        </button>
-        <button
           onClick={() => navigate("/admin/schedule")}
           style={{
             ...buttonBase,
@@ -65,6 +65,15 @@ export default function AdminQuickActions() {
           }}
         >
           Schedule
+        </button>
+        <button
+          onClick={() => navigate("/admin/notes")}
+          style={{
+            ...buttonBase,
+            background: "linear-gradient(135deg, #49595A, #222D2F)",
+          }}
+        >
+          Notes
         </button>
         <button
           onClick={() => navigate("/admin/tools")}
