@@ -16,46 +16,60 @@ export default function AdminQuickActions() {
         pointerEvents: "none",
       }}
     >
-      <button
-        onClick={() => navigate("/admin/pricing")}
+      <div
         style={{
           width: "100%",
           maxWidth: 520,
           margin: "0 auto",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
           gap: 10,
-          padding: "15px 18px",
-          border: "1px solid rgba(255,255,255,0.28)",
-          borderRadius: 18,
-          background: "linear-gradient(135deg, #AC5D7A, #7E3856)",
-          color: "#fff",
-          boxShadow: "0 18px 42px rgba(82,42,57,0.28)",
-          fontSize: 15,
-          fontWeight: 800,
-          letterSpacing: 0.2,
-          cursor: "pointer",
           pointerEvents: "auto",
-          WebkitTapHighlightColor: "transparent",
         }}
       >
-        <svg
-          width="19"
-          height="19"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
+        <button
+          onClick={() => navigate("/admin/tools")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "15px 12px",
+            border: "1px solid rgba(255,255,255,0.28)",
+            borderRadius: 18,
+            background: "linear-gradient(135deg, #2A1D22, #6B1F3E)",
+            color: "#fff",
+            boxShadow: "0 18px 42px rgba(82,42,57,0.22)",
+            fontSize: 14,
+            fontWeight: 800,
+            cursor: "pointer",
+            WebkitTapHighlightColor: "transparent",
+          }}
         >
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-        Pricing Manager
-      </button>
+          Tools
+        </button>
+        <button
+          onClick={() => navigate("/admin/pricing")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "15px 12px",
+            border: "1px solid rgba(255,255,255,0.28)",
+            borderRadius: 18,
+            background: "linear-gradient(135deg, #AC5D7A, #7E3856)",
+            color: "#fff",
+            boxShadow: "0 18px 42px rgba(82,42,57,0.28)",
+            fontSize: 14,
+            fontWeight: 800,
+            cursor: "pointer",
+            WebkitTapHighlightColor: "transparent",
+          }}
+        >
+          Pricing
+        </button>
+      </div>
     </div>
   );
 }
