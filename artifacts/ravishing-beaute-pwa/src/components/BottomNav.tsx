@@ -152,7 +152,7 @@ export default function BottomNav() {
     navigate("/book");
   }
 
-  if (location === "/admin") return null;
+  if (location.startsWith("/admin")) return null;
 
   return (
     <nav
