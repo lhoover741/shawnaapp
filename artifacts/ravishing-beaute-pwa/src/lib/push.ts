@@ -4,6 +4,7 @@ const PUSH_SERVER_URL = configuredPushServerUrl.replace(/\/$/, "");
 const SW_URL = `${import.meta.env.BASE_URL}sw.js`.replace(/\/\//g, "/");
 
 export type PushFlowStatus = "success" | "unsupported" | "denied" | "error";
+export type PushAudience = "admin" | "client";
 
 export type PushServerJson = Record<string, unknown>;
 
@@ -154,12 +155,15 @@ export async function subscribeToPush(): Promise<PushSubscription> {
   return subscription;
 }
 
-export async function saveSubscription(subscription: PushSubscription): Promise<PushServerJson> {
-  const body = JSON.stringify(subscription.toJSON());
+export async function saveSubscription(subscription: PushSubscription, audience: PushAudience = "client"): Promise<PushServerJson> {
+  const body = JSON.stringify({
+    audience,
+    subscription: subscription.toJSON(),
+  });
   return fetchJsonWithLogging(`${PUSH_SERVER_URL}/subscribe`, { method: "POST", body });
 }
 
-export async function requestAndSubscribe(): Promise<PushFlowResult> {
+export async function requestAndSubscribe(audience: PushAudience = "client"): Promise<PushFlowResult> {
   try {
     if (!("Notification" in window)) {
       return { status: "unsupported", message: "Notifications are not supported in this browser.", permission: "unsupported" };
@@ -171,7 +175,7 @@ export async function requestAndSubscribe(): Promise<PushFlowResult> {
       return { status: "denied", message: "Notifications are blocked. Enable them in iOS Settings, then try again.", permission: "denied" };
     }
 
-    logPush("Requesting notification permission", { current: Notification.permission });
+    logPush("Requesting notification permission", { current: Notification.permission, audience });
     const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
     logPush("Notification permission result", permission);
     if (permission !== "granted") {
@@ -179,11 +183,11 @@ export async function requestAndSubscribe(): Promise<PushFlowResult> {
     }
 
     const subscription = await subscribeToPush();
-    const subscribeResponse = await saveSubscription(subscription);
+    const subscribeResponse = await saveSubscription(subscription, audience);
     const registration = await navigator.serviceWorker.ready;
     return {
       status: "success",
-      message: "Notifications enabled and saved.",
+      message: audience === "admin" ? "Admin notifications enabled and saved." : "Client notifications enabled and saved.",
       permission,
       registration: registrationSummary(registration),
       subscription: subscription.toJSON(),
