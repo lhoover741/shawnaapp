@@ -11,6 +11,7 @@ import About from "@/pages/About";
 import Admin from "@/pages/Admin";
 import AdminPricing from "@/pages/AdminPricing";
 import AdminTools from "@/pages/AdminTools";
+import AdminSchedule from "@/pages/AdminSchedule";
 import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/admin" component={Admin} />
         <Route path="/admin/pricing" component={AdminPricing} />
         <Route path="/admin/tools" component={AdminTools} />
+        <Route path="/admin/schedule" component={AdminSchedule} />
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
