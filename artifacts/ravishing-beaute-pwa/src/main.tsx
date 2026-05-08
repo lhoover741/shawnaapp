@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { subscribeUser } from "./push";
+import { registerServiceWorker } from "@/lib/push";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -32,18 +32,9 @@ window.addEventListener("load", () => {
     });
   }
 
-  const notifyBtn = document.getElementById("notifyBtn");
-  if (notifyBtn) {
-    notifyBtn.addEventListener("click", () => {
-      subscribeUser();
-    });
-  }
-
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js")
-      .then(() => console.log("Service Worker Registered"))
-      .catch((err) => console.log("SW Error:", err));
-  }
+  void registerServiceWorker().catch((error) => {
+    console.error("[RB Push] Service worker registration failed", error);
+  });
 });
 
 createRoot(document.getElementById("root")!).render(<App />);
