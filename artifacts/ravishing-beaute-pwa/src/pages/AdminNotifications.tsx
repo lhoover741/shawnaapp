@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { requestAndSubscribe } from "@/lib/push";
 
+type NotificationStats = {
+  stored?: number;
+  adminSubscriptions?: number;
+  clientSubscriptions?: number;
+};
+
 export default function AdminNotifications() {
   const [, navigate] = useLocation();
   const [token, setToken] = useState("");
@@ -12,6 +18,8 @@ export default function AdminNotifications() {
   const [url, setUrl] = useState("/");
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState("");
+  const [stats, setStats] = useState<NotificationStats>({});
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -23,6 +31,10 @@ export default function AdminNotifications() {
       // Stay on password screen.
     }
   }, []);
+
+  useEffect(() => {
+    if (token) void loadStats();
+  }, [token]);
 
   async function login() {
     setPasswordError("");
@@ -46,11 +58,26 @@ export default function AdminNotifications() {
     }
   }
 
+  async function loadStats() {
+    setStatsLoading(true);
+    try {
+      const response = await fetch("/api/notification-stats", { cache: "no-store" });
+      if (!response.ok) throw new Error("Could not load subscriber counts.");
+      const data = (await response.json()) as NotificationStats;
+      setStats(data);
+    } catch {
+      setStats({});
+    } finally {
+      setStatsLoading(false);
+    }
+  }
+
   async function enableAdminNotifications() {
     setNotice("Requesting admin notification access…");
     const result = await requestAndSubscribe("admin");
     if (result.status === "success") {
       setNotice("Admin notifications are enabled on this device.");
+      void loadStats();
     } else {
       setNotice(result.message);
     }
@@ -61,6 +88,7 @@ export default function AdminNotifications() {
     const result = await requestAndSubscribe("client");
     if (result.status === "success") {
       setNotice("This device is subscribed as a client notification test device.");
+      void loadStats();
     } else {
       setNotice(result.message);
     }
@@ -92,6 +120,7 @@ export default function AdminNotifications() {
       if (!response.ok) throw new Error(data.error ?? "Could not send notification.");
       setNotice(`Notification sent to ${data.sent ?? 0} client device(s). Failed: ${data.failed ?? 0}.`);
       setMessage("");
+      void loadStats();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not send notification.");
     } finally {
@@ -134,22 +163,35 @@ export default function AdminNotifications() {
             <p style={{ fontSize: 10, letterSpacing: 2, color: "#7D6268", fontWeight: 800 }}>PUSH</p>
             <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#201B1C" }}>Notifications</p>
           </div>
-          <button onClick={enableAdminNotifications} style={{ border: "none", background: "none", color: "#AC5D7A", fontSize: 13, fontWeight: 700 }}>Enable</button>
+          <button onClick={loadStats} style={{ border: "none", background: "none", color: "#AC5D7A", fontSize: 13, fontWeight: 700 }}>{statsLoading ? "Loading" : "Refresh"}</button>
         </div>
       </div>
 
       <div style={{ padding: "14px 16px 0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+          {[
+            ["Admin", stats.adminSubscriptions ?? 0, "#EEF7E9", "#3A6B28"],
+            ["Clients", stats.clientSubscriptions ?? 0, "#FEF9EC", "#B8860B"],
+            ["Total", stats.stored ?? 0, "#F3EAED", "#7D6268"],
+          ].map(([label, value, bg, color]) => (
+            <div key={String(label)} style={{ backgroundColor: String(bg), borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
+              <p style={{ color: String(color), fontSize: 20, fontWeight: 900 }}>{String(value)}</p>
+              <p style={{ color: String(color), fontSize: 9.5, fontWeight: 900, letterSpacing: 0.8 }}>{String(label).toUpperCase()}</p>
+            </div>
+          ))}
+        </div>
+
         <div style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 12 }}>
           <p style={{ fontSize: 11, letterSpacing: 1.5, color: "#7D6268", fontWeight: 900, marginBottom: 5 }}>ADMIN ALERTS</p>
           <p style={{ fontSize: 12.5, color: "#6E565C", lineHeight: 1.45, marginBottom: 10 }}>
-            Tap Enable to subscribe this device as Shawna/admin. Admin devices receive new booking, confirmation, and cancellation alerts.
+            Subscribe this phone as Shawna/admin to receive new booking, confirmation, and cancellation alerts.
           </p>
           <button onClick={enableAdminNotifications} style={{ width: "100%", padding: "11px 0", border: "none", borderRadius: 11, backgroundColor: "#AC5D7A", color: "#fff", fontSize: 13, fontWeight: 800 }}>Enable Admin Notifications</button>
         </div>
 
         <div style={{ backgroundColor: "#FEF9EC", border: "1px solid #EDD9A3", borderRadius: 14, padding: 12, marginBottom: 12 }}>
           <p style={{ fontSize: 12.5, color: "#8A6509", lineHeight: 1.45 }}>
-            Client notifications only go to clients who allow notifications on the Ravishing Beauté site/app. This should be used for real updates like sale reminders, openings, or appointment information.
+            Client notifications go to clients who allow Ravishing Beauté notifications. Use this for booking updates, last-minute openings, and limited-time service announcements.
           </p>
         </div>
 
