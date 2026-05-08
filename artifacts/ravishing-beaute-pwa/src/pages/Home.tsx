@@ -91,6 +91,7 @@ export default function Home() {
       });
       const data = (await res.json()) as { token?: string; error?: string };
       if (res.ok && data.token) {
+        localStorage.setItem("admin_access", "true");
         setShowPinModal(false);
         setAuthStage("pin");
         navigate("/admin");
