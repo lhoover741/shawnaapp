@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { registerServiceWorker } from "@/lib/push";
+import { preloadServicePricing } from "@/lib/service-pricing";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -37,4 +38,5 @@ window.addEventListener("load", () => {
   });
 });
 
+await preloadServicePricing();
 createRoot(document.getElementById("root")!).render(<App />);
