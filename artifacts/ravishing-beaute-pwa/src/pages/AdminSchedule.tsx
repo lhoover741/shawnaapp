@@ -13,6 +13,8 @@ type Booking = {
   flexibleDate: string;
   timePreference: string;
   status: BookingStatus;
+  depositPaid?: boolean;
+  depositPaidAt?: string | null;
   totalEstimate: number | null;
   notes: string | null;
   addons: string | null;
@@ -64,6 +66,10 @@ function getDigits(value: string) {
   return value.replace(/\D/g, "");
 }
 
+function appleCashMessage(booking: Booking) {
+  return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. Your $25 deposit is needed to secure your ${booking.serviceLabel} appointment request for ${getShortDateLabel(booking.preferredDate, booking.flexibleDate)}. You can tap the $25 amount in this iMessage and send it with Apple Cash. Please reply once sent.`;
+}
+
 function isToday(date: string | null) {
   if (!date) return false;
   const now = new Date();
@@ -102,6 +108,7 @@ export default function AdminSchedule() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<ScheduleFilter>("confirmed");
   const [notice, setNotice] = useState("");
+  const [updating, setUpdating] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -170,6 +177,28 @@ export default function AdminSchedule() {
     }
   }
 
+  async function setDepositPaid(bookingId: number, depositPaid: boolean) {
+    setUpdating(bookingId);
+    setNotice("");
+    try {
+      const response = await fetch(`/api/admin/booking-requests/${bookingId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ depositPaid }),
+      });
+      if (!response.ok) throw new Error("Could not update deposit status.");
+      const updated = (await response.json()) as Booking;
+      setBookings((prev) => prev.map((booking) => (booking.id === bookingId ? { ...booking, ...updated } : booking)));
+    } catch {
+      setNotice("Could not update deposit status.");
+    } finally {
+      setUpdating(null);
+    }
+  }
+
   const scheduleBookings = useMemo(() => {
     return bookings
       .filter((booking) => {
@@ -199,6 +228,8 @@ export default function AdminSchedule() {
     confirmed: bookings.filter((b) => b.status === "confirmed").length,
     pending: bookings.filter((b) => b.status === "pending").length,
     all: bookings.filter((b) => b.status === "confirmed" || b.status === "pending").length,
+    paid: bookings.filter((b) => (b.status === "confirmed" || b.status === "pending") && b.depositPaid).length,
+    due: bookings.filter((b) => (b.status === "confirmed" || b.status === "pending") && !b.depositPaid).length,
   };
 
   if (!token) {
@@ -241,6 +272,17 @@ export default function AdminSchedule() {
       </div>
 
       <div style={{ padding: "14px 16px 0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+          <div style={{ backgroundColor: "#EEF7E9", borderRadius: 12, padding: "9px 8px", textAlign: "center" }}>
+            <p style={{ color: "#3A6B28", fontSize: 18, fontWeight: 900 }}>{counts.paid}</p>
+            <p style={{ color: "#3A6B28", fontSize: 10, fontWeight: 900, letterSpacing: 0.8 }}>DEPOSIT PAID</p>
+          </div>
+          <div style={{ backgroundColor: "#FEF9EC", borderRadius: 12, padding: "9px 8px", textAlign: "center" }}>
+            <p style={{ color: "#B8860B", fontSize: 18, fontWeight: 900 }}>{counts.due}</p>
+            <p style={{ color: "#B8860B", fontSize: 10, fontWeight: 900, letterSpacing: 0.8 }}>DEPOSIT DUE</p>
+          </div>
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
           {[
             ["confirmed", `Confirmed ${counts.confirmed}`],
@@ -283,6 +325,7 @@ export default function AdminSchedule() {
 
                 {grouped[key].map((booking) => {
                   const phoneDigits = getDigits(booking.phone);
+                  const appleCashHref = `sms:${phoneDigits || booking.phone}?body=${encodeURIComponent(appleCashMessage(booking))}`;
                   return (
                     <div key={booking.id} style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: "0 10px 24px rgba(82,42,57,0.045)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
@@ -290,20 +333,32 @@ export default function AdminSchedule() {
                           <p style={{ fontSize: 16, fontWeight: 800, color: "#201B1C", marginBottom: 3 }}>{booking.clientName}</p>
                           <p style={{ fontSize: 12, color: "#7D6268" }}>{booking.phone}</p>
                         </div>
-                        <span style={{ backgroundColor: booking.status === "confirmed" ? "#EEF7E9" : "#FEF9EC", color: booking.status === "confirmed" ? "#3A6B28" : "#B8860B", borderRadius: 999, padding: "4px 9px", fontSize: 11, fontWeight: 800 }}>{booking.status}</span>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 }}>
+                          <span style={{ backgroundColor: booking.status === "confirmed" ? "#EEF7E9" : "#FEF9EC", color: booking.status === "confirmed" ? "#3A6B28" : "#B8860B", borderRadius: 999, padding: "4px 9px", fontSize: 11, fontWeight: 800 }}>{booking.status}</span>
+                          <span style={{ backgroundColor: booking.depositPaid ? "#EEF7E9" : "#FEF9EC", color: booking.depositPaid ? "#3A6B28" : "#B8860B", borderRadius: 999, padding: "4px 9px", fontSize: 10.5, fontWeight: 900 }}>{booking.depositPaid ? "Deposit Paid" : "Deposit Due"}</span>
+                        </div>
                       </div>
 
                       <div style={{ backgroundColor: "#FFFBFA", border: "1px solid #F3EAED", borderRadius: 12, padding: 10, marginBottom: 10 }}>
                         <p style={{ fontSize: 13, color: "#201B1C", fontWeight: 800, marginBottom: 5 }}>{booking.serviceLabel}</p>
                         <p style={{ fontSize: 12, color: "#7D6268", lineHeight: 1.45 }}>{getShortDateLabel(booking.preferredDate, booking.flexibleDate)} • {getTimeLabel(booking.timePreference)}</p>
-                        <p style={{ fontSize: 12, color: "#B9874D", fontWeight: 800, marginTop: 5 }}>{booking.totalEstimate ? `$${booking.totalEstimate}+` : "Estimate not listed"} • $25 deposit</p>
+                        <p style={{ fontSize: 12, color: booking.depositPaid ? "#3A6B28" : "#B9874D", fontWeight: 800, marginTop: 5 }}>
+                          {booking.totalEstimate ? `$${booking.totalEstimate}+` : "Estimate not listed"} • {booking.depositPaid ? "Deposit paid" : "$25 deposit due"}
+                        </p>
                       </div>
 
                       {booking.notes && <p style={{ fontSize: 12, color: "#5E4B51", lineHeight: 1.45, marginBottom: 10, fontStyle: "italic" }}>{booking.notes}</p>}
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                         <a href={`sms:${phoneDigits || booking.phone}`} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#F3EAED", color: "#AC5D7A", border: "1px solid #E4D3D8", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Text</a>
                         <a href={`tel:${phoneDigits || booking.phone}`} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#F9F5F0", color: "#201B1C", border: "1px solid #E4D3D8", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Call</a>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <a href={appleCashHref} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#FEF9EC", color: "#8A6509", border: "1px solid #EDD9A3", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Apple Cash Text</a>
+                        <button onClick={() => setDepositPaid(booking.id, !booking.depositPaid)} disabled={updating === booking.id} style={{ padding: "10px 0", borderRadius: 10, backgroundColor: booking.depositPaid ? "#FEECEC" : "#EEF7E9", color: booking.depositPaid ? "#B00020" : "#3A6B28", border: `1px solid ${booking.depositPaid ? "#F5BDBD" : "#C6E3BD"}`, fontSize: 13, fontWeight: 800, opacity: updating === booking.id ? 0.6 : 1 }}>
+                          {booking.depositPaid ? "Mark Unpaid" : "Mark Paid"}
+                        </button>
                       </div>
                     </div>
                   );
