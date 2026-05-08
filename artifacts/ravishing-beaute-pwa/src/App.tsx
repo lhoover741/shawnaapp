@@ -14,6 +14,7 @@ import AdminTools from "@/pages/AdminTools";
 import AdminSchedule from "@/pages/AdminSchedule";
 import AdminDeposits from "@/pages/AdminDeposits";
 import AdminNotes from "@/pages/AdminNotes";
+import AdminNotifications from "@/pages/AdminNotifications";
 import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/admin/schedule" component={AdminSchedule} />
         <Route path="/admin/deposits" component={AdminDeposits} />
         <Route path="/admin/notes" component={AdminNotes} />
+        <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
