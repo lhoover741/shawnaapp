@@ -5,8 +5,6 @@ import { NetworkFirst } from "workbox-strategies";
 
 declare const self: ServiceWorkerGlobalScope;
 
-const PUSH_SERVER_URL = "https://ravishing-push-server-production.up.railway.app";
-
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
@@ -19,81 +17,6 @@ function scopedUrl(path: string): string {
   return new URL(path.replace(/^\//, ""), self.registration.scope).href;
 }
 
-function formatBookingDate(date?: string | null, flexibleDate?: boolean): string {
-  if (flexibleDate) return "Flexible date";
-  if (!date) return "Date not selected";
-
-  try {
-    return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return date;
-  }
-}
-
-async function sendBookingPushNotification(booking: Record<string, unknown>) {
-  const clientName =
-    typeof booking.clientName === "string" && booking.clientName.trim()
-      ? booking.clientName.trim()
-      : "New client";
-
-  const service =
-    typeof booking.service === "string" && booking.service.trim()
-      ? booking.service.trim()
-      : "Booking request";
-
-  const dateLabel = formatBookingDate(
-    typeof booking.preferredDate === "string" ? booking.preferredDate : null,
-    Boolean(booking.flexibleDate),
-  );
-
-  const timePreference =
-    typeof booking.timePreference === "string" && booking.timePreference.trim()
-      ? booking.timePreference.trim()
-      : "Flexible time";
-
-  const body = `${service} • ${dateLabel} • ${timePreference}`;
-
-  const response = await fetch(`${PUSH_SERVER_URL}/send`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: `New booking request from ${clientName}`,
-      body,
-      url: "/admin",
-    }),
-  });
-
-  const result = await response.json().catch(() => ({}));
-  console.log("[RB Push SW] booking push result", result);
-
-  if (!response.ok) {
-    throw new Error(`Booking push failed with ${response.status}`);
-  }
-}
-
-async function handleBookingRequest(request: Request): Promise<Response> {
-  const requestClone = request.clone();
-  const response = await fetch(request);
-  const responseClone = response.clone();
-
-  if (response.ok) {
-    try {
-      const booking = (await requestClone.json()) as Record<string, unknown>;
-      await sendBookingPushNotification(booking);
-    } catch (error) {
-      console.error("[RB Push SW] booking notification failed", error);
-    }
-  }
-
-  return responseClone;
-}
-
 self.addEventListener("install", () => {
   console.log("[RB Push SW] install", { scope: self.registration.scope });
   void self.skipWaiting();
@@ -102,19 +25,6 @@ self.addEventListener("install", () => {
 self.addEventListener("activate", (event) => {
   console.log("[RB Push SW] activate", { scope: self.registration.scope });
   event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-  const isBookingRequest =
-    event.request.method === "POST" &&
-    url.origin === self.location.origin &&
-    url.pathname === "/api/booking-requests";
-
-  if (isBookingRequest) {
-    console.log("[RB Push SW] booking request detected");
-    event.respondWith(handleBookingRequest(event.request));
-  }
 });
 
 self.addEventListener("push", (event) => {
