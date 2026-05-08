@@ -13,6 +13,7 @@ import AdminPricing from "@/pages/AdminPricing";
 import AdminTools from "@/pages/AdminTools";
 import AdminSchedule from "@/pages/AdminSchedule";
 import AdminDeposits from "@/pages/AdminDeposits";
+import AdminNotes from "@/pages/AdminNotes";
 import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
@@ -32,6 +33,7 @@ function Router() {
         <Route path="/admin/tools" component={AdminTools} />
         <Route path="/admin/schedule" component={AdminSchedule} />
         <Route path="/admin/deposits" component={AdminDeposits} />
+        <Route path="/admin/notes" component={AdminNotes} />
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
