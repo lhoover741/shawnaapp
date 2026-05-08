@@ -37,9 +37,8 @@ function dateLabel(booking: Booking) {
   }
 }
 
-function depositMessage(booking: Booking, payLink: string) {
-  const linkLine = payLink ? ` Pay here: ${payLink}` : " Please send confirmation once paid.";
-  return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. Your $25 deposit is needed to secure your ${booking.serviceLabel} appointment request for ${dateLabel(booking)}.${linkLine}`;
+function appleCashMessage(booking: Booking) {
+  return `Hi ${booking.clientName}, this is Shawna with Ravishing Beauté. Your $25 deposit is needed to secure your ${booking.serviceLabel} appointment request for ${dateLabel(booking)}. You can tap the $25 amount in this iMessage and send it with Apple Cash. Please reply once sent.`;
 }
 
 export default function AdminDeposits() {
@@ -51,9 +50,6 @@ export default function AdminDeposits() {
   const [filter, setFilter] = useState<DepositFilter>("due");
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<number | null>(null);
-  const [payLink, setPayLink] = useState("");
-  const [payLinkDraft, setPayLinkDraft] = useState("");
-  const [savingLink, setSavingLink] = useState(false);
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -70,7 +66,6 @@ export default function AdminDeposits() {
   useEffect(() => {
     if (token) {
       void loadBookings(token);
-      void loadSettings(token);
     }
   }, [token]);
 
@@ -110,47 +105,6 @@ export default function AdminDeposits() {
       setNotice("Could not load deposit records.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function loadSettings(authToken: string) {
-    try {
-      const response = await fetch("/api/admin/settings", {
-        headers: { Authorization: `Bearer ${authToken}` },
-        cache: "no-store",
-      });
-      if (!response.ok) return;
-      const data = (await response.json()) as { settings?: { depositPaymentLink?: string } };
-      const link = data.settings?.depositPaymentLink ?? "";
-      setPayLink(link);
-      setPayLinkDraft(link);
-    } catch {
-      // Link can be added later.
-    }
-  }
-
-  async function savePayLink() {
-    setSavingLink(true);
-    setNotice("");
-    try {
-      const response = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ depositPaymentLink: payLinkDraft.trim() }),
-      });
-      if (!response.ok) throw new Error("Could not save link");
-      const data = (await response.json()) as { settings?: { depositPaymentLink?: string } };
-      const link = data.settings?.depositPaymentLink ?? payLinkDraft.trim();
-      setPayLink(link);
-      setPayLinkDraft(link);
-      setNotice(link ? "Deposit link saved." : "Deposit link cleared.");
-    } catch {
-      setNotice("Could not save deposit link.");
-    } finally {
-      setSavingLink(false);
     }
   }
 
@@ -222,26 +176,19 @@ export default function AdminDeposits() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <button onClick={() => navigate("/admin")} style={{ border: "none", background: "none", color: "#7D6268", fontSize: 13 }}>← Admin</button>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 10, letterSpacing: 2, color: "#7D6268", fontWeight: 800 }}>PAYMENT STATUS</p>
+            <p style={{ fontSize: 10, letterSpacing: 2, color: "#7D6268", fontWeight: 800 }}>APPLE CASH</p>
             <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#201B1C" }}>Deposit Tracking</p>
           </div>
-          <button onClick={() => { void loadBookings(token); void loadSettings(token); }} style={{ border: "none", background: "none", color: "#AC5D7A", fontSize: 13, fontWeight: 700 }}>Refresh</button>
+          <button onClick={() => { void loadBookings(token); }} style={{ border: "none", background: "none", color: "#AC5D7A", fontSize: 13, fontWeight: 700 }}>Refresh</button>
         </div>
       </div>
 
       <div style={{ padding: "14px 16px 0" }}>
         <div style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 12 }}>
-          <p style={{ fontSize: 11, letterSpacing: 1.5, color: "#7D6268", fontWeight: 900, marginBottom: 5 }}>DEPOSIT PAY LINK</p>
-          <p style={{ fontSize: 12.5, color: "#6E565C", lineHeight: 1.45, marginBottom: 10 }}>Paste the link clients should use for the $25 deposit. The text button will include it automatically.</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
-            <input
-              value={payLinkDraft}
-              onChange={(event) => setPayLinkDraft(event.target.value)}
-              placeholder="Paste deposit link"
-              style={{ minWidth: 0, width: "100%", boxSizing: "border-box", padding: "11px 12px", border: "1px solid #E4D3D8", borderRadius: 11, fontSize: 13, outline: "none" }}
-            />
-            <button onClick={savePayLink} disabled={savingLink} style={{ padding: "0 14px", border: "none", borderRadius: 11, backgroundColor: "#AC5D7A", color: "#fff", fontSize: 13, fontWeight: 800, opacity: savingLink ? 0.65 : 1 }}>{savingLink ? "Saving" : "Save"}</button>
-          </div>
+          <p style={{ fontSize: 11, letterSpacing: 1.5, color: "#7D6268", fontWeight: 900, marginBottom: 5 }}>IMESSAGE APPLE CASH REQUEST</p>
+          <p style={{ fontSize: 12.5, color: "#6E565C", lineHeight: 1.45 }}>
+            Tap Apple Cash Text to open iMessage with a $25 deposit message. The client can tap the $25 amount in iMessage and send through Apple Cash. Apple does not allow websites to auto-send the Apple Cash payment bubble for security.
+          </p>
           {notice && <p style={{ fontSize: 12, color: "#7D6268", marginTop: 8 }}>{notice}</p>}
         </div>
 
@@ -265,7 +212,7 @@ export default function AdminDeposits() {
         ) : (
           shownBookings.map((booking) => {
             const phoneDigits = digits(booking.phone);
-            const smsHref = `sms:${phoneDigits || booking.phone}?body=${encodeURIComponent(depositMessage(booking, payLink))}`;
+            const smsHref = `sms:${phoneDigits || booking.phone}?body=${encodeURIComponent(appleCashMessage(booking))}`;
             return (
               <div key={booking.id} style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: "0 10px 24px rgba(82,42,57,0.045)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
@@ -278,7 +225,7 @@ export default function AdminDeposits() {
                 <p style={{ fontSize: 13, color: "#201B1C", fontWeight: 800, marginBottom: 4 }}>{booking.serviceLabel}</p>
                 <p style={{ fontSize: 12, color: "#7D6268", lineHeight: 1.45, marginBottom: 10 }}>{dateLabel(booking)} • {booking.timePreference || "flexible"} • $25 deposit</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <a href={smsHref} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#FEF9EC", color: "#8A6509", border: "1px solid #EDD9A3", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Text Pay Link</a>
+                  <a href={smsHref} style={{ textAlign: "center", padding: "10px 0", borderRadius: 10, backgroundColor: "#FEF9EC", color: "#8A6509", border: "1px solid #EDD9A3", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>Apple Cash Text</a>
                   <button onClick={() => setDepositPaid(booking.id, !booking.depositPaid)} disabled={updating === booking.id} style={{ padding: "10px 0", borderRadius: 10, backgroundColor: booking.depositPaid ? "#FEECEC" : "#EEF7E9", color: booking.depositPaid ? "#B00020" : "#3A6B28", border: `1px solid ${booking.depositPaid ? "#F5BDBD" : "#C6E3BD"}`, fontSize: 13, fontWeight: 800, opacity: updating === booking.id ? 0.6 : 1 }}>{booking.depositPaid ? "Mark Unpaid" : "Mark Paid"}</button>
                 </div>
               </div>
