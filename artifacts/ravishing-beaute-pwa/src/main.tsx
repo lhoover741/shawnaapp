@@ -38,5 +38,7 @@ window.addEventListener("load", () => {
   });
 });
 
-await preloadServicePricing();
-createRoot(document.getElementById("root")!).render(<App />);
+const root = createRoot(document.getElementById("root")!);
+void preloadServicePricing().finally(() => {
+  root.render(<App />);
+});
