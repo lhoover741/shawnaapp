@@ -188,8 +188,10 @@ export default function Book() {
       // Request push permission & get web push subscription (fire-and-forget on failure)
       let webPushSub: string | undefined;
       try {
-        const sub = await requestAndSubscribe();
-        if (sub) webPushSub = JSON.stringify(sub);
+        const pushResult = await requestAndSubscribe();
+        if (pushResult.status === "success" && pushResult.subscription) {
+          webPushSub = JSON.stringify(pushResult.subscription);
+        }
       } catch { /* non-blocking */ }
 
       const res = await fetch("/api/booking-requests", {

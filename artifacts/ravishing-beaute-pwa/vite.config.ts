@@ -26,7 +26,7 @@ export default defineConfig({
       base: basePath,
       strategies: "injectManifest",
       srcDir: "src",
-      filename: "sw-custom.ts",
+      filename: "sw.ts",
       manifest: {
         name: "Ravishing Beauté",
         short_name: "RB Beauté",
@@ -35,6 +35,7 @@ export default defineConfig({
         background_color: "#000101",
         display: "standalone",
         orientation: "portrait",
+        id: basePath,
         start_url: basePath,
         scope: basePath,
         icons: [

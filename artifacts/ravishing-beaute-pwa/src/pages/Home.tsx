@@ -31,6 +31,7 @@ export default function Home() {
   const [passwordError, setPasswordError] = useState("");
   const [authStage, setAuthStage] = useState<"pin" | "password">("pin");
   const [pushStatus, setPushStatus] = useState<"idle" | "saved" | "denied" | "error">("idle");
+  const [pushMessage, setPushMessage] = useState("");
   const [pushBusy, setPushBusy] = useState(false);
 
   const { data: reviews } = useQuery<Review[]>({
@@ -86,10 +87,20 @@ export default function Home() {
   async function handleEnableNotifications() {
     setPushBusy(true);
     setPushStatus("idle");
+    setPushMessage("");
     try {
-      const sub = await requestAndSubscribe();
-      setPushStatus(sub ? "saved" : "denied");
-    } catch {
+      const result = await requestAndSubscribe();
+      setPushMessage(result.message);
+      if (result.status === "success") {
+        setPushStatus("saved");
+      } else if (result.status === "denied" || result.status === "unsupported") {
+        setPushStatus("denied");
+      } else {
+        setPushStatus("error");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Couldn’t enable notifications right now.";
+      setPushMessage(message);
       setPushStatus("error");
     } finally {
       setPushBusy(false);
@@ -98,7 +109,10 @@ export default function Home() {
 
   useEffect(() => {
     if (pushStatus !== "saved") return;
-    const timer = setTimeout(() => setPushStatus("idle"), 3500);
+    const timer = setTimeout(() => {
+      setPushStatus("idle");
+      setPushMessage("");
+    }, 5000);
     return () => clearTimeout(timer);
   }, [pushStatus]);
 
@@ -167,9 +181,27 @@ export default function Home() {
           >
             {pushBusy ? "Enabling..." : "Enable Notifications"}
           </button>
-          {pushStatus === "saved" && <p style={{ marginTop: 10, fontSize: 12, color: "#2E7D32" }}>Notifications enabled.</p>}
-          {pushStatus === "denied" && <p style={{ marginTop: 10, fontSize: 12, color: "#9C5070" }}>Notifications were not enabled.</p>}
-          {pushStatus === "error" && <p style={{ marginTop: 10, fontSize: 12, color: "#C0392B" }}>Couldn’t enable notifications right now.</p>}
+          {pushStatus === "saved" && <p style={{ marginTop: 10, fontSize: 12, color: "#2E7D32" }}>{pushMessage || "Notifications enabled."}</p>}
+          {pushStatus === "denied" && <p style={{ marginTop: 10, fontSize: 12, color: "#9C5070" }}>{pushMessage || "Notifications were not enabled."}</p>}
+          {pushStatus === "error" && <p style={{ marginTop: 10, fontSize: 12, color: "#C0392B" }}>{pushMessage || "Couldn’t enable notifications right now."}</p>}
+          <button
+            type="button"
+            onClick={() => navigate("/debug")}
+            style={{
+              marginTop: 10,
+              width: "100%",
+              border: "1px solid #E4D3D8",
+              borderRadius: 12,
+              padding: "10px 14px",
+              backgroundColor: "#FFF7FA",
+              color: "#7D6268",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Push Debug
+          </button>
         </div>
       </div>
 

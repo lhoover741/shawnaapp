@@ -8,6 +8,7 @@ import Services from "@/pages/Services";
 import Book from "@/pages/Book";
 import About from "@/pages/About";
 import Admin from "@/pages/Admin";
+import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ function Router() {
         <Route path="/book" component={Book} />
         <Route path="/about" component={About} />
         <Route path="/admin" component={Admin} />
+        <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
       <BottomNav />
