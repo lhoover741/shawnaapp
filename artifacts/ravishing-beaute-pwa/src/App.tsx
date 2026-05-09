@@ -15,7 +15,7 @@ import Reviews from "@/pages/Reviews";
 import Admin from "@/pages/Admin";
 import AdminPricing from "@/pages/AdminPricing";
 import AdminTools from "@/pages/AdminTools";
-import AdminSchedule from "@/pages/AdminSchedule";
+import AdminSchedule from "@/pages/AdminScheduleSettings";
 import AdminDeposits from "@/pages/AdminDeposits";
 import AdminNotes from "@/pages/AdminNotes";
 import AdminNotifications from "@/pages/AdminNotifications";
