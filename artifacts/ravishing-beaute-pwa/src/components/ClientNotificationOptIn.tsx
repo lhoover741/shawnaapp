@@ -49,8 +49,11 @@ export default function ClientNotificationOptIn({ compact = false }: { compact?:
       <p style={{ fontFamily: "'Playfair Display', serif", fontSize: compact ? 19 : 22, fontWeight: 700, color: "#201B1C", marginBottom: 6 }}>
         Stay updated with Ravishing Beauté
       </p>
-      <p style={{ fontSize: 13, color: "#7D6268", lineHeight: 1.55, marginBottom: 12 }}>
+      <p style={{ fontSize: 13, color: "#7D6268", lineHeight: 1.55, marginBottom: 10 }}>
         Get notified about last-minute openings, booking updates, and limited-time service announcements.
+      </p>
+      <p style={{ fontSize: 11.5, color: "#8E737A", lineHeight: 1.45, marginBottom: 12 }}>
+        By allowing notifications, you agree to receive booking updates, appointment reminders, last-minute openings, and service announcements from Ravishing Beauté. You can turn notifications off anytime in your device settings.
       </p>
       <button
         onClick={enableNotifications}

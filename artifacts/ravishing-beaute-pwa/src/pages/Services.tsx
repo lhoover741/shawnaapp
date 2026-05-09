@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
+import ClientNotificationOptIn from "@/components/ClientNotificationOptIn";
 import {
   ADD_ONS,
   DEPOSIT_NOTE,
@@ -453,6 +454,10 @@ export default function Services() {
             </section>
           ))
         )}
+
+        <div style={{ marginBottom: 16 }}>
+          <ClientNotificationOptIn compact />
+        </div>
 
         <section
           style={{

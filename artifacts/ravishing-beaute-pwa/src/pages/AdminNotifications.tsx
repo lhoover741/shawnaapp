@@ -8,6 +8,16 @@ type NotificationStats = {
   clientSubscriptions?: number;
 };
 
+type NotificationLog = {
+  id: number;
+  title: string;
+  body: string;
+  audience: string;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+};
+
 export default function AdminNotifications() {
   const [, navigate] = useLocation();
   const [token, setToken] = useState("");
@@ -17,8 +27,10 @@ export default function AdminNotifications() {
   const [message, setMessage] = useState("");
   const [url, setUrl] = useState("/");
   const [sending, setSending] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState("");
   const [stats, setStats] = useState<NotificationStats>({});
+  const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
@@ -33,7 +45,10 @@ export default function AdminNotifications() {
   }, []);
 
   useEffect(() => {
-    if (token) void loadStats();
+    if (token) {
+      void loadStats();
+      void loadLogs();
+    }
   }, [token]);
 
   async function login() {
@@ -69,6 +84,40 @@ export default function AdminNotifications() {
       setStats({});
     } finally {
       setStatsLoading(false);
+    }
+  }
+
+  async function loadLogs() {
+    try {
+      const response = await fetch("/api/admin/notification-logs", {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Could not load notification logs.");
+      const data = (await response.json()) as NotificationLog[];
+      setLogs(Array.isArray(data) ? data.slice(0, 8) : []);
+    } catch {
+      setLogs([]);
+    }
+  }
+
+  async function sendTestNotification() {
+    setTesting(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/test-notification", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await response.json()) as { sent?: number; failed?: number; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not send test notification.");
+      setNotice(`Admin test sent to ${data.sent ?? 0} admin device(s). Failed: ${data.failed ?? 0}.`);
+      void loadStats();
+      void loadLogs();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Could not send test notification.");
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -121,6 +170,7 @@ export default function AdminNotifications() {
       setNotice(`Notification sent to ${data.sent ?? 0} client device(s). Failed: ${data.failed ?? 0}.`);
       setMessage("");
       void loadStats();
+      void loadLogs();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not send notification.");
     } finally {
@@ -163,7 +213,7 @@ export default function AdminNotifications() {
             <p style={{ fontSize: 10, letterSpacing: 2, color: "#7D6268", fontWeight: 800 }}>PUSH</p>
             <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#201B1C" }}>Notifications</p>
           </div>
-          <button onClick={loadStats} style={{ border: "none", background: "none", color: "#AC5D7A", fontSize: 13, fontWeight: 700 }}>{statsLoading ? "Loading" : "Refresh"}</button>
+          <button onClick={() => { void loadStats(); void loadLogs(); }} style={{ border: "none", background: "none", color: "#AC5D7A", fontSize: 13, fontWeight: 700 }}>{statsLoading ? "Loading" : "Refresh"}</button>
         </div>
       </div>
 
@@ -187,6 +237,9 @@ export default function AdminNotifications() {
             Subscribe this phone as Shawna/admin to receive new booking, confirmation, and cancellation alerts.
           </p>
           <button onClick={enableAdminNotifications} style={{ width: "100%", padding: "11px 0", border: "none", borderRadius: 11, backgroundColor: "#AC5D7A", color: "#fff", fontSize: 13, fontWeight: 800 }}>Enable Admin Notifications</button>
+          <button onClick={sendTestNotification} disabled={testing} style={{ width: "100%", padding: "11px 0", border: "1px solid #E4D3D8", borderRadius: 11, backgroundColor: "#FFF7FA", color: "#7D6268", fontSize: 13, fontWeight: 800, marginTop: 8, opacity: testing ? 0.65 : 1 }}>
+            {testing ? "Sending Test…" : "Send Test Admin Notification"}
+          </button>
         </div>
 
         <div style={{ backgroundColor: "#FEF9EC", border: "1px solid #EDD9A3", borderRadius: 14, padding: 12, marginBottom: 12 }}>
@@ -226,6 +279,31 @@ export default function AdminNotifications() {
           <button onClick={sendNotification} disabled={sending} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 12, backgroundColor: "#AC5D7A", color: "#fff", fontSize: 15, fontWeight: 900, opacity: sending ? 0.65 : 1 }}>
             {sending ? "Sending…" : "Send Notification to Clients"}
           </button>
+        </div>
+
+
+        <div style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 12 }}>
+          <p style={{ fontSize: 11, letterSpacing: 1.5, color: "#7D6268", fontWeight: 900, marginBottom: 8 }}>RECENT NOTIFICATIONS</p>
+          {logs.length === 0 ? (
+            <p style={{ fontSize: 12.5, color: "#7D6268", lineHeight: 1.45 }}>No notifications have been logged yet.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 9 }}>
+              {logs.map((log) => (
+                <div key={log.id} style={{ border: "1px solid #F3EAED", borderRadius: 12, padding: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+                    <p style={{ fontSize: 13, color: "#201B1C", fontWeight: 900 }}>{log.title}</p>
+                    <p style={{ fontSize: 10.5, color: "#7D6268", whiteSpace: "nowrap" }}>{new Date(log.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
+                  </div>
+                  <p style={{ fontSize: 12, color: "#6E565C", lineHeight: 1.4, marginBottom: 6 }}>{log.body.length > 90 ? `${log.body.slice(0, 90)}…` : log.body}</p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 10.5, color: "#7D6268", fontWeight: 800, textTransform: "uppercase" }}>{log.audience}</span>
+                    <span style={{ fontSize: 10.5, color: "#2E7D32", fontWeight: 800 }}>Sent {log.sentCount}</span>
+                    <span style={{ fontSize: 10.5, color: log.failedCount ? "#C0392B" : "#7D6268", fontWeight: 800 }}>Failed {log.failedCount}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <button onClick={enableClientNotifications} style={{ width: "100%", padding: "11px 0", border: "1px dashed #D8C3C9", borderRadius: 11, backgroundColor: "transparent", color: "#7D6268", fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Subscribe This Device as Client Test</button>
