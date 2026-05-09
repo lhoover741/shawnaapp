@@ -1,42 +1,81 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
-const policies = [
-  {
-    title: "$25 deposit required",
-    body: "A $25 deposit is required to secure your appointment once your request is approved. Your appointment is not fully held until the deposit is received.",
-  },
-  {
-    title: "Appointments by approval",
-    body: "All appointments are requested first and confirmed after availability is reviewed. Please wait for confirmation before considering the appointment finalized.",
-  },
-  {
-    title: "Hours and closed days",
-    body: "Ravishing Beauté is available from 8:30 AM to 6:00 PM by appointment. We are closed Sunday and Monday.",
-  },
-  {
-    title: "Same-day requests",
-    body: "Same-day bookings are only available if approved. If a same-day opening is not available, we will help you choose another date.",
-  },
-  {
-    title: "Hair included for natural colors",
-    body: "For eligible braiding services, hair is included only in natural colors 1, 1B, 2, and 4 unless otherwise specified.",
-  },
-  {
-    title: "Appointment prep",
-    body: "Please come detangled to stay on schedule. Arriving prepared helps us keep your service smooth, polished, and on time.",
-  },
-  {
-    title: "Late arrivals and changes",
-    body: "Please communicate as early as possible if you are running late or need to adjust your appointment. Late arrivals may limit the service time available or require rescheduling.",
-  },
-  {
-    title: "Cancellations",
-    body: "We understand schedules change. Please give as much notice as possible if you need to cancel or reschedule so the appointment time can be managed professionally.",
-  },
-];
+type PublicSettings = {
+  depositAmount: string;
+  hoursNote: string;
+  closedDaysNote: string;
+  sameDayNote: string;
+  naturalHairColorsNote: string;
+};
+
+const DEFAULTS: PublicSettings = {
+  depositAmount: "25",
+  hoursNote: "8:30 AM to 6:00 PM by appointment",
+  closedDaysNote: "Closed Sunday and Monday",
+  sameDayNote: "Same-day bookings only if approved",
+  naturalHairColorsNote: "Braiding hair is included only in natural colors 1, 1B, 2, and 4 unless otherwise specified.",
+};
+
+function buildPolicies(settings: PublicSettings) {
+  const deposit = `$${settings.depositAmount.replace(/[^0-9.]/g, "") || DEFAULTS.depositAmount}`;
+
+  return [
+    {
+      title: `${deposit} deposit required`,
+      body: `A ${deposit} deposit is required to secure your appointment once your request is approved. Your appointment is not fully held until the deposit is received.`,
+    },
+    {
+      title: "Appointments by approval",
+      body: "All appointments are requested first and confirmed after availability is reviewed. Please wait for confirmation before considering the appointment finalized.",
+    },
+    {
+      title: "Hours and closed days",
+      body: `Ravishing Beauté is available ${settings.hoursNote}. ${settings.closedDaysNote}.`,
+    },
+    {
+      title: "Same-day requests",
+      body: `${settings.sameDayNote}. If a same-day opening is not available, we will help you choose another date.`,
+    },
+    {
+      title: "Hair included for natural colors",
+      body: settings.naturalHairColorsNote,
+    },
+    {
+      title: "Appointment prep",
+      body: "Please come detangled to stay on schedule. Arriving prepared helps us keep your service smooth, polished, and on time.",
+    },
+    {
+      title: "Late arrivals and changes",
+      body: "Please communicate as early as possible if you are running late or need to adjust your appointment. Late arrivals may limit the service time available or require rescheduling.",
+    },
+    {
+      title: "Cancellations",
+      body: "We understand schedules change. Please give as much notice as possible if you need to cancel or reschedule so the appointment time can be managed professionally.",
+    },
+  ];
+}
 
 export default function Policies() {
   const [, navigate] = useLocation();
+  const [settings, setSettings] = useState<PublicSettings>(DEFAULTS);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const response = await fetch("/api/settings", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as Partial<PublicSettings>;
+        setSettings({ ...DEFAULTS, ...data });
+      } catch {
+        setSettings(DEFAULTS);
+      }
+    }
+
+    void loadSettings();
+  }, []);
+
+  const policies = buildPolicies(settings);
 
   return (
     <div style={{ background: "linear-gradient(180deg, #FFFBFA 0%, #F9F5F0 50%, #F6EEF1 100%)", minHeight: "100vh", paddingBottom: "calc(104px + env(safe-area-inset-bottom, 0px))" }}>

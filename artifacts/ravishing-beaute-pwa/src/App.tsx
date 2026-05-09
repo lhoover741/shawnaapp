@@ -6,7 +6,7 @@ import AdminQuickActions from "@/components/AdminQuickActions";
 import Home from "@/pages/Home";
 import Gallery from "@/pages/Gallery";
 import Services from "@/pages/Services";
-import Book from "@/pages/Book";
+import Book from "@/pages/BookPublic";
 import About from "@/pages/About";
 import Notifications from "@/pages/Notifications";
 import Contact from "@/pages/Contact";
@@ -15,12 +15,13 @@ import Reviews from "@/pages/Reviews";
 import Admin from "@/pages/Admin";
 import AdminPricing from "@/pages/AdminPricing";
 import AdminTools from "@/pages/AdminTools";
-import AdminSchedule from "@/pages/AdminSchedule";
+import AdminSchedule from "@/pages/AdminScheduleSettings";
 import AdminDeposits from "@/pages/AdminDeposits";
 import AdminNotes from "@/pages/AdminNotes";
 import AdminNotifications from "@/pages/AdminNotifications";
 import AdminReviews from "@/pages/AdminReviews";
 import AdminAvailability from "@/pages/AdminAvailability";
+import AdminSettings from "@/pages/AdminSettings";
 import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
@@ -48,6 +49,7 @@ function Router() {
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/reviews" component={AdminReviews} />
         <Route path="/admin/availability" component={AdminAvailability} />
+        <Route path="/admin/settings" component={AdminSettings} />
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>

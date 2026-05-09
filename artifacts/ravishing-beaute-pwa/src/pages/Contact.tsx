@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
-const SHAWNA_PHONE = "7085743658";
+const DEFAULT_PHONE = "7085743658";
+
+type PublicSettings = {
+  contactPhone?: string;
+};
 
 export default function Contact() {
   const [, navigate] = useLocation();
@@ -9,6 +13,24 @@ export default function Contact() {
   const [phone, setPhone] = useState("");
   const [question, setQuestion] = useState("");
   const [error, setError] = useState("");
+  const [contactPhone, setContactPhone] = useState(DEFAULT_PHONE);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const response = await fetch("/api/settings", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as PublicSettings;
+        if (typeof data.contactPhone === "string" && data.contactPhone.trim()) {
+          setContactPhone(data.contactPhone.replace(/\D/g, "") || DEFAULT_PHONE);
+        }
+      } catch {
+        setContactPhone(DEFAULT_PHONE);
+      }
+    }
+
+    void loadSettings();
+  }, []);
 
   function sendMessage() {
     if (!name.trim() || !question.trim()) {
@@ -17,7 +39,7 @@ export default function Contact() {
     }
 
     const message = `Hi Shawna, this is ${name.trim()}${phone.trim() ? ` (${phone.trim()})` : ""}. I have a question for Ravishing Beauté: ${question.trim()}`;
-    window.location.href = `sms:${SHAWNA_PHONE}?body=${encodeURIComponent(message)}`;
+    window.location.href = `sms:${contactPhone}?body=${encodeURIComponent(message)}`;
   }
 
   return (
