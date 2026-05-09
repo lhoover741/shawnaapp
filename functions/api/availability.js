@@ -14,7 +14,7 @@ export async function onRequestOptions() {
 export async function onRequestGet(context) {
   try {
     const url = new URL(context.request.url);
-    const response = await fetch(`${RAILWAY_API}/availability${url.search}`, {
+    const response = await fetch(`${RAILWAY_API}/api/availability${url.search}`, {
       method: "GET"
     });
     const text = await response.text();
