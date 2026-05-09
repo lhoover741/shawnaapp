@@ -9,6 +9,9 @@ import Services from "@/pages/Services";
 import Book from "@/pages/Book";
 import About from "@/pages/About";
 import Notifications from "@/pages/Notifications";
+import Contact from "@/pages/Contact";
+import Policies from "@/pages/Policies";
+import Reviews from "@/pages/Reviews";
 import Admin from "@/pages/Admin";
 import AdminPricing from "@/pages/AdminPricing";
 import AdminTools from "@/pages/AdminTools";
@@ -16,6 +19,8 @@ import AdminSchedule from "@/pages/AdminSchedule";
 import AdminDeposits from "@/pages/AdminDeposits";
 import AdminNotes from "@/pages/AdminNotes";
 import AdminNotifications from "@/pages/AdminNotifications";
+import AdminReviews from "@/pages/AdminReviews";
+import AdminAvailability from "@/pages/AdminAvailability";
 import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
@@ -31,6 +36,9 @@ function Router() {
         <Route path="/book" component={Book} />
         <Route path="/about" component={About} />
         <Route path="/notifications" component={Notifications} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/policies" component={Policies} />
+        <Route path="/reviews" component={Reviews} />
         <Route path="/admin" component={Admin} />
         <Route path="/admin/pricing" component={AdminPricing} />
         <Route path="/admin/tools" component={AdminTools} />
@@ -38,6 +46,8 @@ function Router() {
         <Route path="/admin/deposits" component={AdminDeposits} />
         <Route path="/admin/notes" component={AdminNotes} />
         <Route path="/admin/notifications" component={AdminNotifications} />
+        <Route path="/admin/reviews" component={AdminReviews} />
+        <Route path="/admin/availability" component={AdminAvailability} />
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
