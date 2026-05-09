@@ -6,7 +6,7 @@ import AdminQuickActions from "@/components/AdminQuickActions";
 import Home from "@/pages/Home";
 import Gallery from "@/pages/Gallery";
 import Services from "@/pages/Services";
-import Book from "@/pages/Book";
+import Book from "@/pages/BookPublic";
 import About from "@/pages/About";
 import Notifications from "@/pages/Notifications";
 import Contact from "@/pages/Contact";
