@@ -21,6 +21,7 @@ import AdminNotes from "@/pages/AdminNotes";
 import AdminNotifications from "@/pages/AdminNotifications";
 import AdminReviews from "@/pages/AdminReviews";
 import AdminAvailability from "@/pages/AdminAvailability";
+import AdminSettings from "@/pages/AdminSettings";
 import Debug from "@/pages/Debug";
 import NotFound from "@/pages/not-found";
 
@@ -48,6 +49,7 @@ function Router() {
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/reviews" component={AdminReviews} />
         <Route path="/admin/availability" component={AdminAvailability} />
+        <Route path="/admin/settings" component={AdminSettings} />
         <Route path="/debug" component={Debug} />
         <Route component={NotFound} />
       </Switch>
