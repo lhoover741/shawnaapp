@@ -66,6 +66,31 @@ export default function Notifications() {
           </div>
         </section>
 
+        <section style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 18, padding: 16, marginTop: 14, boxShadow: "0 12px 28px rgba(82,42,57,0.05)" }}>
+          <p style={{ fontSize: 10, letterSpacing: 2, color: "#7D6268", fontWeight: 900, marginBottom: 6 }}>
+            ANDROID / CHROME SETUP
+          </p>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#201B1C", marginBottom: 10 }}>
+            Install and allow alerts
+          </p>
+          <div style={{ display: "grid", gap: 10 }}>
+            {[
+              "Open ravishingbeaute.salon in Chrome.",
+              "Tap menu.",
+              "Tap Add to Home screen or Install app.",
+              "Open Ravishing Beauté from the app icon.",
+              "Tap Allow Notifications."
+            ].map((step, index) => (
+              <div key={step} style={{ display: "grid", gridTemplateColumns: "30px 1fr", gap: 10, alignItems: "start" }}>
+                <span style={{ width: 30, height: 30, borderRadius: 999, backgroundColor: "#F3EAED", color: "#AC5D7A", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900 }}>
+                  {index + 1}
+                </span>
+                <p style={{ fontSize: 13, color: "#5E4B51", lineHeight: 1.5, paddingTop: 5 }}>{step}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section style={{ backgroundColor: "#FEF9EC", border: "1px solid #EDD9A3", borderRadius: 16, padding: 14, marginTop: 14 }}>
           <p style={{ fontSize: 12.5, color: "#8A6509", lineHeight: 1.5 }}>
             Tip: iPhone web push notifications work best after the site is added to the Home Screen and opened like an app. If notifications are blocked, check iPhone Settings and allow notifications for Ravishing Beauté.

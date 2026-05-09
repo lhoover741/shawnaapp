@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { fetchJson } from "@/lib/api";
-import { requestAndSubscribe } from "@/lib/push";
+import ClientNotificationOptIn from "@/components/ClientNotificationOptIn";
 import { DEPOSIT_NOTE, HAIR_INCLUDED_NOTE, SERVICES } from "@/lib/services";
 
 const BASE = import.meta.env.BASE_URL;
@@ -45,11 +45,7 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [authStage, setAuthStage] = useState<"pin" | "password">("pin");
-  const [pushStatus, setPushStatus] = useState<
-    "idle" | "saved" | "denied" | "error"
-  >("idle");
-  const [pushMessage, setPushMessage] = useState("");
-  const [pushBusy, setPushBusy] = useState(false);
+
 
   const { data: reviews } = useQuery<Review[]>({
     queryKey: ["featured-reviews"],
@@ -104,43 +100,6 @@ export default function Home() {
     }
   }
 
-  async function handleEnableNotifications() {
-    setPushBusy(true);
-    setPushStatus("idle");
-    setPushMessage("");
-    try {
-      const result = await requestAndSubscribe();
-      setPushMessage(result.message);
-      if (result.status === "success") {
-        setPushStatus("saved");
-      } else if (
-        result.status === "denied" ||
-        result.status === "unsupported"
-      ) {
-        setPushStatus("denied");
-      } else {
-        setPushStatus("error");
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Couldn’t enable notifications right now.";
-      setPushMessage(message);
-      setPushStatus("error");
-    } finally {
-      setPushBusy(false);
-    }
-  }
-
-  useEffect(() => {
-    if (pushStatus !== "saved") return;
-    const timer = setTimeout(() => {
-      setPushStatus("idle");
-      setPushMessage("");
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [pushStatus]);
 
   const GALLERY_IMGS = [
     "braids-1.jpg",
@@ -256,98 +215,7 @@ export default function Home() {
       </div>
 
       <div style={{ padding: "16px 16px 24px" }}>
-        <div
-          style={{
-            backgroundColor: "#FFF",
-            border: "1px solid #E4D3D8",
-            borderRadius: 16,
-            padding: 16,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 10,
-              letterSpacing: 2,
-              color: "#7D6268",
-              fontWeight: 600,
-              marginBottom: 4,
-            }}
-          >
-            NOTIFICATIONS
-          </p>
-          <p
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#201B1C",
-              marginBottom: 6,
-            }}
-          >
-            Get booking updates on your phone
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: "#7D6268",
-              lineHeight: 1.5,
-              marginBottom: 12,
-            }}
-          >
-            Turn on browser notifications so you’ll know when your appointment
-            is confirmed, updated, or canceled.
-          </p>
-          <button
-            onClick={handleEnableNotifications}
-            disabled={pushBusy}
-            style={{
-              width: "100%",
-              border: "none",
-              borderRadius: 12,
-              padding: "12px 14px",
-              backgroundColor: "#AC5D7A",
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: pushBusy ? "default" : "pointer",
-              opacity: pushBusy ? 0.8 : 1,
-            }}
-          >
-            {pushBusy ? "Enabling..." : "Enable Notifications"}
-          </button>
-          {pushStatus === "saved" && (
-            <p style={{ marginTop: 10, fontSize: 12, color: "#2E7D32" }}>
-              {pushMessage || "Notifications enabled."}
-            </p>
-          )}
-          {pushStatus === "denied" && (
-            <p style={{ marginTop: 10, fontSize: 12, color: "#9C5070" }}>
-              {pushMessage || "Notifications were not enabled."}
-            </p>
-          )}
-          {pushStatus === "error" && (
-            <p style={{ marginTop: 10, fontSize: 12, color: "#C0392B" }}>
-              {pushMessage || "Couldn’t enable notifications right now."}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => navigate("/debug")}
-            style={{
-              marginTop: 10,
-              width: "100%",
-              border: "1px solid #E4D3D8",
-              borderRadius: 12,
-              padding: "10px 14px",
-              backgroundColor: "#FFF7FA",
-              color: "#7D6268",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Push Debug
-          </button>
-        </div>
+        <ClientNotificationOptIn compact />
       </div>
 
       {/* Services preview */}

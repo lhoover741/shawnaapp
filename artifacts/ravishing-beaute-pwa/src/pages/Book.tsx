@@ -13,6 +13,7 @@ import {
   type ServiceCategory,
 } from "@/lib/services";
 import { registerPushToken } from "@/lib/api";
+import ClientNotificationOptIn from "@/components/ClientNotificationOptIn";
 import { requestAndSubscribe } from "@/lib/push";
 
 type FormData = {
@@ -632,6 +633,9 @@ export default function Book() {
                 </span>
               </div>
             ))}
+          </div>
+          <div style={{ width: "100%", marginBottom: 16 }}>
+            <ClientNotificationOptIn compact />
           </div>
           <button
             onClick={() => navigate("/")}

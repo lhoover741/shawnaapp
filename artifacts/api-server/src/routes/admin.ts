@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createHmac } from "crypto";
 import { db } from "@workspace/db";
-import { reviewsTable, pushTokensTable } from "@workspace/db";
+import { notificationLogsTable, reviewsTable, pushTokensTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import type { Request, Response, NextFunction } from "express";
 
@@ -168,6 +168,126 @@ interface ExpoMessage {
   data?: Record<string, unknown>;
 }
 
+type NotificationAudience = "admin" | "client";
+
+async function sendExpoNotification(
+  audience: NotificationAudience,
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<{ sent: number; failed: number }> {
+  const tokens = await db
+    .select({ token: pushTokensTable.token })
+    .from(pushTokensTable)
+    .where(eq(pushTokensTable.isAdmin, audience === "admin"));
+
+  const CHUNK = 100;
+  let sent = 0;
+  let failed = 0;
+
+  for (let i = 0; i < tokens.length; i += CHUNK) {
+    const chunk = tokens.slice(i, i + CHUNK);
+    const messages: ExpoMessage[] = chunk.map((t) => ({
+      to: t.token,
+      sound: "default",
+      title,
+      body,
+      ...(data ? { data } : {}),
+    }));
+
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Accept-Encoding": "gzip, deflate",
+      },
+      body: JSON.stringify(messages),
+    });
+
+    if (response.ok) {
+      const result = (await response.json()) as { data?: { status: string }[] };
+      if (result.data) {
+        for (const ticket of result.data) {
+          if (ticket.status === "ok") sent++;
+          else failed++;
+        }
+      } else {
+        sent += chunk.length;
+      }
+    } else {
+      failed += chunk.length;
+    }
+  }
+
+  return { sent, failed };
+}
+
+async function saveNotificationLog(
+  title: string,
+  body: string,
+  url: string,
+  audience: NotificationAudience,
+  sentCount: number,
+  failedCount: number,
+) {
+  await db.insert(notificationLogsTable).values({
+    title,
+    body,
+    url,
+    audience,
+    sentCount,
+    failedCount,
+  });
+}
+
+router.get("/admin/notification-logs", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const logs = await db
+      .select()
+      .from(notificationLogsTable)
+      .orderBy(desc(notificationLogsTable.createdAt));
+    res.json(logs);
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch notification logs");
+    res.status(500).json({ error: "Failed to fetch notification logs" });
+  }
+});
+
+router.post("/admin/client-notification", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { title, body, url } = req.body as PushSendBody & { url?: unknown };
+    if (typeof body !== "string" || body.trim().length === 0) {
+      res.status(400).json({ error: "body is required" });
+      return;
+    }
+
+    const cleanTitle = typeof title === "string" && title.trim() ? title.trim() : "Ravishing Beauté";
+    const cleanBody = body.trim();
+    const cleanUrl = typeof url === "string" && url.trim() ? url.trim() : "/";
+    const result = await sendExpoNotification("client", cleanTitle, cleanBody, { path: cleanUrl });
+    await saveNotificationLog(cleanTitle, cleanBody, cleanUrl, "client", result.sent, result.failed);
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Failed to send client notification");
+    res.status(500).json({ error: "Failed to send client notification" });
+  }
+});
+
+router.post("/admin/test-notification", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const title = "Ravishing Beauté admin test";
+    const body = "Admin notifications are working.";
+    const url = "/admin";
+    const result = await sendExpoNotification("admin", title, body, { path: url });
+    await saveNotificationLog(title, body, url, "admin", result.sent, result.failed);
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Failed to send admin test notification");
+    res.status(500).json({ error: "Failed to send admin test notification" });
+  }
+});
+
 router.post("/admin/push", requireAdmin, async (req: Request, res: Response) => {
   try {
     const { title, body, data } = req.body as PushSendBody;
@@ -179,54 +299,15 @@ router.post("/admin/push", requireAdmin, async (req: Request, res: Response) => 
       res.status(400).json({ error: "body is required" });
       return;
     }
-    const tokens = await db.select({ token: pushTokensTable.token }).from(pushTokensTable)
-      .where(eq(pushTokensTable.isAdmin, false));
-    if (tokens.length === 0) {
-      res.json({ sent: 0, failed: 0, message: "No registered devices" });
-      return;
-    }
 
-    const CHUNK = 100;
-    let sent = 0;
-    let failed = 0;
+    const result = await sendExpoNotification(
+      "client",
+      title.trim(),
+      body.trim(),
+      data && typeof data === "object" ? data as Record<string, unknown> : undefined,
+    );
 
-    for (let i = 0; i < tokens.length; i += CHUNK) {
-      const chunk = tokens.slice(i, i + CHUNK);
-      const messages: ExpoMessage[] = chunk.map((t) => ({
-        to: t.token,
-        sound: "default",
-        title: title.trim(),
-        body: body.trim(),
-        ...(data && typeof data === "object" ? { data: data as Record<string, unknown> } : {}),
-      }));
-
-      const response = await fetch("https://exp.host/--/api/v2/push/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "Accept-Encoding": "gzip, deflate",
-        },
-        body: JSON.stringify(messages),
-      });
-
-      if (response.ok) {
-        const result = (await response.json()) as { data?: { status: string }[] };
-        if (result.data) {
-          for (const ticket of result.data) {
-            if (ticket.status === "ok") sent++;
-            else failed++;
-          }
-        } else {
-          sent += chunk.length;
-        }
-      } else {
-        failed += chunk.length;
-        req.log.error({ status: response.status }, "Expo push API error");
-      }
-    }
-
-    res.json({ sent, failed });
+    res.json(result);
   } catch (err) {
     req.log.error({ err }, "Failed to send push notifications");
     res.status(500).json({ error: "Failed to send notifications" });
