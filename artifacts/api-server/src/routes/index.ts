@@ -4,6 +4,7 @@ import reviewsRouter from "./reviews";
 import adminRouter from "./admin";
 import notificationsRouter from "./notifications";
 import availabilityRouter from "./availability";
+import settingsRouter from "./settings";
 import bookingRequestsRouter from "./booking-requests";
 import webPushRouter from "./web-push";
 
@@ -14,6 +15,7 @@ router.use(reviewsRouter);
 router.use(adminRouter);
 router.use(notificationsRouter);
 router.use(availabilityRouter);
+router.use(settingsRouter);
 router.use(bookingRequestsRouter);
 router.use(webPushRouter);
 
