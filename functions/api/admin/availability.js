@@ -15,7 +15,7 @@ export async function onRequestGet(context) {
   try {
     const authorization = context.request.headers.get("Authorization") || "";
     const url = new URL(context.request.url);
-    const response = await fetch(`${RAILWAY_API}/admin/availability${url.search}`, {
+    const response = await fetch(RAILWAY_API + "/api/admin/availability" + url.search, {
       method: "GET",
       headers: { Authorization: authorization }
     });
@@ -30,7 +30,7 @@ async function proxyWrite(context, method) {
   try {
     const authorization = context.request.headers.get("Authorization") || "";
     const body = await context.request.text();
-    const response = await fetch(`${RAILWAY_API}/admin/availability`, {
+    const response = await fetch(RAILWAY_API + "/api/admin/availability", {
       method,
       headers: {
         "Content-Type": "application/json",
