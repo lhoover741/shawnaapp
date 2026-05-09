@@ -18,6 +18,7 @@ export default function AdminAvailability() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [rows, setRows] = useState<Record<string, Row>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
   const auth = typeof window !== "undefined" ? window.localStorage.getItem("admin_token") || "" : "";
 
@@ -27,16 +28,22 @@ export default function AdminAvailability() {
     if (!response.ok) { setNotice("Could not load availability."); return; }
     const data = await response.json() as Row[];
     const next: Record<string, Row> = {};
-    for (const row of Array.isArray(data) ? data : []) next[row.date] = row;
+    const loadedNotes: Record<string, string> = {};
+    for (const row of Array.isArray(data) ? data : []) {
+      next[row.date] = row;
+      loadedNotes[row.date] = row.note || "";
+    }
     setRows(next);
+    setNotes(loadedNotes);
   }
 
-  async function save(date: string, status: Status, note = rows[date]?.note || "") {
+  async function save(date: string, status: Status, note = notes[date] || rows[date]?.note || "") {
     if (!auth) { setNotice("Sign in from the admin dashboard first."); return; }
     const response = await fetch("/api/admin/availability", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` }, body: JSON.stringify({ date, status, note }) });
     if (!response.ok) { setNotice("Could not update that date."); return; }
     const row = await response.json() as Row;
     setRows((current) => ({ ...current, [date]: row }));
+    setNotes((current) => ({ ...current, [date]: row.note || "" }));
   }
 
   useEffect(() => { void load(); }, [year, month]);
@@ -64,7 +71,7 @@ export default function AdminAvailability() {
             <section key={date} style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 16, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10 }}><p style={{ fontSize: 15, fontWeight: 900, color: "#201B1C" }}>{label(date)}</p><span style={{ fontSize: 11, fontWeight: 900, color: row?.status === "open" ? "#3A6B28" : row?.status === "blocked" || closed ? "#B00020" : "#7D6268" }}>{row?.status === "open" ? "Open" : row?.status === "blocked" || closed ? "Blocked" : "Normal"}</span></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}><button onClick={() => save(date, "open")} style={{ padding: 10, border: "1px solid #C6E3BD", borderRadius: 10, backgroundColor: "#EEF7E9", color: "#3A6B28", fontWeight: 900 }}>Open</button><button onClick={() => save(date, "blocked")} style={{ padding: 10, border: "1px solid #F5BDBD", borderRadius: 10, backgroundColor: "#FEECEC", color: "#B00020", fontWeight: 900 }}>Block</button></div>
-              <input defaultValue={row?.note || ""} onBlur={(e) => save(date, row?.status || "blocked", e.target.value)} placeholder="Optional note" style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid #E4D3D8", borderRadius: 10 }} />
+              <input value={notes[date] || ""} onChange={(e) => setNotes((current) => ({ ...current, [date]: e.target.value }))} onBlur={() => save(date, row?.status || "blocked", notes[date] || "")} placeholder="Optional note" style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid #E4D3D8", borderRadius: 10 }} />
             </section>
           );
         })}
