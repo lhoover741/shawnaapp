@@ -13,6 +13,7 @@ const buttonBase = {
 } as const;
 
 const actions = [
+  { label: "Gallery", path: "/admin/gallery", bg: "linear-gradient(135deg, #AC5D7A, #7E3856)" },
   { label: "Notify", path: "/admin/notifications", bg: "linear-gradient(135deg, #97AFB0, #49595A)" },
   { label: "Deposits", path: "/admin/deposits", bg: "linear-gradient(135deg, #3A6B28, #1E3A17)" },
   { label: "Schedule", path: "/admin/schedule", bg: "linear-gradient(135deg, #B9874D, #7A5C1E)" },
@@ -20,8 +21,7 @@ const actions = [
   { label: "Avail.", path: "/admin/availability", bg: "linear-gradient(135deg, #8F4864, #522A39)" },
   { label: "Settings", path: "/admin/settings", bg: "linear-gradient(135deg, #49595A, #263133)" },
   { label: "Notes", path: "/admin/notes", bg: "linear-gradient(135deg, #49595A, #222D2F)" },
-  { label: "Tools", path: "/admin/tools", bg: "linear-gradient(135deg, #2A1D22, #6B1F3E)" },
-  { label: "Pricing", path: "/admin/pricing", bg: "linear-gradient(135deg, #AC5D7A, #7E3856)" },
+  { label: "Pricing", path: "/admin/pricing", bg: "linear-gradient(135deg, #2A1D22, #6B1F3E)" },
 ];
 
 export default function AdminQuickActions() {
