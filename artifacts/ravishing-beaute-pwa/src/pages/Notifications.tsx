@@ -1,6 +1,8 @@
 import { useLocation } from "wouter";
 import ClientNotificationOptIn from "@/components/ClientNotificationOptIn";
 
+const LAUNCH_DOMAIN = "app.ravishingbeaute.salon";
+
 export default function Notifications() {
   const [, navigate] = useLocation();
 
@@ -33,7 +35,7 @@ export default function Notifications() {
           App & Notifications
         </p>
         <p style={{ fontSize: 13, color: "#7D6268", marginTop: 8, lineHeight: 1.55 }}>
-          Add Ravishing Beauté to your Home Screen, then allow notifications for appointment updates, openings, and service announcements.
+          Add Ravishing Beauté from {LAUNCH_DOMAIN} to your Home Screen, then allow notifications for appointment updates, openings, and service announcements.
         </p>
       </div>
 
@@ -49,7 +51,7 @@ export default function Notifications() {
           </p>
           <div style={{ display: "grid", gap: 10 }}>
             {[
-              "Open ravishingbeaute.salon in Safari on your iPhone.",
+              `Open ${LAUNCH_DOMAIN} in Safari on your iPhone.`,
               "Tap the Share button. It may show as the square with the arrow, or under the More button depending on your Safari layout.",
               "Scroll down and tap Add to Home Screen.",
               "Keep Open as Web App turned on if your iPhone shows that option.",
@@ -75,7 +77,7 @@ export default function Notifications() {
           </p>
           <div style={{ display: "grid", gap: 10 }}>
             {[
-              "Open ravishingbeaute.salon in Chrome.",
+              `Open ${LAUNCH_DOMAIN} in Chrome.`,
               "Tap menu.",
               "Tap Add to Home screen or Install app.",
               "Open Ravishing Beauté from the app icon.",
@@ -93,7 +95,7 @@ export default function Notifications() {
 
         <section style={{ backgroundColor: "#FEF9EC", border: "1px solid #EDD9A3", borderRadius: 16, padding: 14, marginTop: 14 }}>
           <p style={{ fontSize: 12.5, color: "#8A6509", lineHeight: 1.5 }}>
-            Tip: iPhone web push notifications work best after the site is added to the Home Screen and opened like an app. If notifications are blocked, check iPhone Settings and allow notifications for Ravishing Beauté.
+            Tip: iPhone web push notifications work best after the site is added to the Home Screen from {LAUNCH_DOMAIN} and opened like an app. If notifications are blocked, check iPhone Settings and allow notifications for Ravishing Beauté.
           </p>
         </section>
 
