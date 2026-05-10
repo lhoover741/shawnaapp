@@ -11,12 +11,17 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: jsonHeaders });
 }
 
-export async function onRequestPost(context) {
+export async function onRequestPost() {
   try {
-    const authorization = context.request.headers.get("Authorization") || "";
-    const response = await fetch(`${RAILWAY_API}/admin/test-notification`, {
+    const response = await fetch(`${RAILWAY_API}/send`, {
       method: "POST",
-      headers: { Authorization: authorization }
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Ravishing Beauté admin test",
+        body: "Admin notifications are working.",
+        url: "/admin",
+        audience: "admin"
+      })
     });
 
     const text = await response.text();
@@ -24,8 +29,8 @@ export async function onRequestPost(context) {
       status: response.status,
       headers: jsonHeaders
     });
-  } catch {
-    return new Response(JSON.stringify({ error: "Failed to send admin test notification" }), {
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed to send admin test notification" }), {
       status: 500,
       headers: jsonHeaders
     });
