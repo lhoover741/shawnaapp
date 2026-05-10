@@ -43,7 +43,11 @@ export default function Gallery() {
     };
   }, []);
 
-  const images = useMemo(() => (uploadedImages.length ? uploadedImages : FALLBACK_IMAGES), [uploadedImages]);
+  const images = useMemo(() => {
+    const uploadedUrls = new Set(uploadedImages.map((image) => image.imageUrl));
+    const originalImages = FALLBACK_IMAGES.filter((image) => !uploadedUrls.has(image.imageUrl));
+    return [...uploadedImages, ...originalImages];
+  }, [uploadedImages]);
 
   return (
     <div style={{ backgroundColor: "#F9F5F0", minHeight: "100vh", paddingBottom: 48 }}>
