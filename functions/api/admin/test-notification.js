@@ -11,8 +11,28 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: jsonHeaders });
 }
 
-export async function onRequestPost() {
+export async function onRequestPost(context) {
   try {
+    const authorization = context.request.headers.get("Authorization") || "";
+    if (!authorization.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: jsonHeaders
+      });
+    }
+
+    const verify = await fetch(`${RAILWAY_API}/admin/settings`, {
+      method: "GET",
+      headers: { Authorization: authorization }
+    });
+
+    if (!verify.ok) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: jsonHeaders
+      });
+    }
+
     const response = await fetch(`${RAILWAY_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
