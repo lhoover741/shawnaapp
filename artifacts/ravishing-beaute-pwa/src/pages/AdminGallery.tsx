@@ -12,6 +12,10 @@ type GalleryImage = {
   createdAt: string;
 };
 
+const MAX_UPLOAD_BYTES = 5.5 * 1024 * 1024;
+const MAX_SOURCE_BYTES = 40 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1800;
+
 const inputStyle = {
   width: "100%",
   boxSizing: "border-box" as const,
@@ -22,6 +26,85 @@ const inputStyle = {
   outline: "none",
   backgroundColor: "#fff",
 };
+
+function fileSizeLabel(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function loadImageFromFile(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Could not read this image. Please choose another photo."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) reject(new Error("Could not optimize this image."));
+        else resolve(blob);
+      },
+      "image/jpeg",
+      quality,
+    );
+  });
+}
+
+async function optimizeGalleryFile(file: File) {
+  if (file.size > MAX_SOURCE_BYTES) {
+    throw new Error("This photo is too large to process. Please choose a smaller image.");
+  }
+
+  if (file.type === "image/jpeg" && file.size <= MAX_UPLOAD_BYTES) {
+    return {
+      blob: file,
+      fileName: file.name || "gallery-image.jpg",
+      contentType: file.type,
+      wasOptimized: false,
+    };
+  }
+
+  const image = await loadImageFromFile(file);
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+  const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+  const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not optimize this image on this device.");
+  context.drawImage(image, 0, 0, width, height);
+
+  const qualities = [0.82, 0.74, 0.66, 0.58, 0.5, 0.42];
+  let bestBlob = await canvasToBlob(canvas, qualities[0]);
+  for (const quality of qualities) {
+    const blob = await canvasToBlob(canvas, quality);
+    bestBlob = blob;
+    if (blob.size <= MAX_UPLOAD_BYTES) break;
+  }
+
+  if (bestBlob.size > MAX_UPLOAD_BYTES) {
+    throw new Error(`This photo is still ${fileSizeLabel(bestBlob.size)} after optimization. Please choose a smaller photo.`);
+  }
+
+  const safeName = (file.name || "gallery-image").replace(/\.[^.]+$/, "");
+  return {
+    blob: bestBlob,
+    fileName: `${safeName}.jpg`,
+    contentType: "image/jpeg",
+    wasOptimized: true,
+  };
+}
 
 export default function AdminGallery() {
   const [, navigate] = useLocation();
@@ -107,13 +190,11 @@ export default function AdminGallery() {
       setNotice("Only JPG, PNG, and WebP images are supported.");
       return;
     }
-    if (file.size > 6 * 1024 * 1024) {
-      setNotice("Please upload an image under 6 MB.");
-      return;
-    }
 
     setUploading(true);
     try {
+      setNotice("Optimizing photo for upload…");
+      const optimized = await optimizeGalleryFile(file);
       const params = new URLSearchParams({
         caption: caption.trim(),
         category: category.trim() || "Style",
@@ -125,10 +206,10 @@ export default function AdminGallery() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": file.type,
-          "X-File-Name": file.name,
+          "Content-Type": optimized.contentType,
+          "X-File-Name": optimized.fileName,
         },
-        body: await file.arrayBuffer(),
+        body: await optimized.blob.arrayBuffer(),
       });
       const data = (await response.json()) as GalleryImage & { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Upload failed.");
@@ -139,7 +220,7 @@ export default function AdminGallery() {
       setFeatured(false);
       setVisible(true);
       setSortOrder("0");
-      setNotice("Photo uploaded to the Ravishing Beauté gallery.");
+      setNotice(optimized.wasOptimized ? "Photo optimized and uploaded to the Ravishing Beauté gallery." : "Photo uploaded to the Ravishing Beauté gallery.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Upload failed.");
     } finally {
@@ -238,7 +319,7 @@ export default function AdminGallery() {
 
         <section style={{ backgroundColor: "#fff", border: "1px solid #E4D3D8", borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: "0 12px 28px rgba(82,42,57,0.05)" }}>
           <p style={{ fontSize: 11, letterSpacing: 1.5, color: "#7D6268", fontWeight: 900, marginBottom: 5 }}>UPLOAD NEW PHOTO</p>
-          <p style={{ fontSize: 12.5, color: "#6E565C", lineHeight: 1.45, marginBottom: 12 }}>Add polished work directly to the public Ravishing Beauté gallery. JPG, PNG, and WebP are supported up to 6 MB.</p>
+          <p style={{ fontSize: 12.5, color: "#6E565C", lineHeight: 1.45, marginBottom: 12 }}>Add polished work directly to the public Ravishing Beauté gallery. Large phone photos are automatically resized before upload.</p>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -254,7 +335,7 @@ export default function AdminGallery() {
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#6E565C", fontWeight: 800 }}><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} /> Featured</label>
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#6E565C", fontWeight: 800 }}><input type="checkbox" checked={visible} onChange={(event) => setVisible(event.target.checked)} /> Public</label>
           </div>
-          <button onClick={uploadPhoto} disabled={uploading} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 12, backgroundColor: "#AC5D7A", color: "#fff", fontSize: 15, fontWeight: 900, opacity: uploading ? 0.65 : 1 }}>{uploading ? "Uploading…" : "Upload Photo"}</button>
+          <button onClick={uploadPhoto} disabled={uploading} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 12, backgroundColor: "#AC5D7A", color: "#fff", fontSize: 15, fontWeight: 900, opacity: uploading ? 0.65 : 1 }}>{uploading ? "Optimizing…" : "Upload Photo"}</button>
         </section>
 
         {notice && <div style={{ backgroundColor: "#FEF9EC", border: "1px solid #EDD9A3", borderRadius: 14, padding: 12, color: "#8A6509", fontSize: 12.5, lineHeight: 1.45, marginBottom: 12 }}>{notice}</div>}
