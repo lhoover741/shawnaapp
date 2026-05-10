@@ -21,7 +21,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const verify = await fetch(`${RAILWAY_API}/admin/settings`, {
+    const verify = await fetch(`${RAILWAY_API}/api/admin/settings`, {
       method: "GET",
       headers: { Authorization: authorization }
     });
