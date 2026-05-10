@@ -7,26 +7,20 @@ const jsonHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 
+function isAuthorized(context) {
+  const authorization = context.request.headers.get("Authorization") || "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  const expectedToken = context.env.ADMIN_TOKEN || "admin-authenticated";
+  return token && token === expectedToken;
+}
+
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: jsonHeaders });
 }
 
 export async function onRequestPost(context) {
   try {
-    const authorization = context.request.headers.get("Authorization") || "";
-    if (!authorization.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: jsonHeaders
-      });
-    }
-
-    const verify = await fetch(`${RAILWAY_API}/api/admin/settings`, {
-      method: "GET",
-      headers: { Authorization: authorization }
-    });
-
-    if (!verify.ok) {
+    if (!isAuthorized(context)) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: jsonHeaders
