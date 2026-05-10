@@ -22,6 +22,7 @@ import AdminNotifications from "@/pages/AdminNotifications";
 import AdminReviews from "@/pages/AdminReviews";
 import AdminAvailability from "@/pages/AdminAvailability";
 import AdminSettings from "@/pages/AdminSettings";
+import AdminGallery from "@/pages/AdminGallery";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ function Router() {
         <Route path="/policies" component={Policies} />
         <Route path="/reviews" component={Reviews} />
         <Route path="/admin" component={Admin} />
+        <Route path="/admin/gallery" component={AdminGallery} />
         <Route path="/admin/pricing" component={AdminPricing} />
         <Route path="/admin/tools" component={AdminTools} />
         <Route path="/admin/schedule" component={AdminSchedule} />
